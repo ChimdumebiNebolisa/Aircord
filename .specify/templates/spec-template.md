@@ -98,6 +98,12 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Scope Boundaries and Claim Discipline *(mandatory for Aircord)*
+
+- The spec MUST state how the feature serves the reputation loop, measured backtest, auditability, or hackathon judging criteria.
+- The spec MUST preserve Aircord's locked product decisions and explicitly defer out-of-scope expansion.
+- The spec MUST identify any claims that require Gate A or Gate B evidence before they can be stated as results.
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]

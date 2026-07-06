@@ -13,6 +13,11 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
+**Aircord Gate Rule**: Gate A (live paired disagreement and labeled anchors) and
+Gate B (computable three-method backtest) MUST appear before app polish and
+before optional vector-indexing work. Tasks that present accuracy claims MUST
+depend on Gate B results.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)

@@ -40,7 +40,16 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+The plan MUST explicitly pass or justify these Aircord gates:
+
+- Spec-first: technical choices trace to locked product decisions in spec.md.
+- Honest claims: no absolute ground-truth, free-PurpleAir, or impossible-without-CockroachDB claims.
+- Memory changes outcomes: reputation weighting visibly changes at least one estimate.
+- Computed metrics only: any accuracy number is pending until Gate B computes it.
+- Scope discipline: one metro cluster, no national app, mobile app, user accounts, forecasting, or health-advice engine.
+- Auditability: each estimate records trusted/downweighted/ignored sensors and reasons.
+- Short transactions: Bedrock/LLM reasoning happens outside CockroachDB transactions.
+- Testable gates first: Gate A and Gate B precede app polish and optional vector indexing.
 
 ## Project Structure
 

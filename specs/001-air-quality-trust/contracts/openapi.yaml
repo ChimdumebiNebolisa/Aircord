@@ -1,0 +1,327 @@
+openapi: 3.1.0
+info:
+  title: Aircord MVP API
+  version: 0.1.0
+  description: >
+    Contract for the Aircord one-metro MVP. Responses must avoid uncomputed
+    accuracy claims and must label regulatory monitors as references, not
+    absolute truth.
+servers:
+  - url: http://localhost:8000
+paths:
+  /clusters/active:
+    get:
+      summary: Get the active metro cluster and Gate A status
+      operationId: getActiveCluster
+      responses:
+        "200":
+          description: Active cluster
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cluster"
+  /clusters/active/cells:
+    get:
+      summary: List cells for the active cluster
+      operationId: listCells
+      responses:
+        "200":
+          description: Cells with latest estimate summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CellSummary"
+  /cells/{cell_id}:
+    get:
+      summary: Get a cell estimate and audit rationale
+      operationId: getCellDetail
+      parameters:
+        - name: cell_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cell detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CellDetail"
+        "404":
+          description: Cell not found
+  /sensors/{sensor_id}/reputation:
+    get:
+      summary: Get sensor reputation memory and recent evidence
+      operationId: getSensorReputation
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Sensor reputation detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorReputation"
+        "404":
+          description: Sensor not found
+  /showcases/degraded-sensor:
+    get:
+      summary: Get the degraded-sensor memory beat
+      operationId: getDegradedSensorShowcase
+      responses:
+        "200":
+          description: Degraded sensor showcase
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DegradedSensorShowcase"
+        "404":
+          description: No degraded-sensor showcase available
+  /backtests/latest:
+    get:
+      summary: Get the latest Gate B backtest result
+      operationId: getLatestBacktest
+      responses:
+        "200":
+          description: Latest backtest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacktestResult"
+  /backtests:
+    post:
+      summary: Request a bounded backtest run for the active cluster
+      operationId: createBacktest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BacktestRequest"
+      responses:
+        "202":
+          description: Backtest accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [backtest_run_id, status]
+                properties:
+                  backtest_run_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending]
+components:
+  schemas:
+    Cluster:
+      type: object
+      required: [cluster_id, name, gate_a_status, gate_a_notes]
+      properties:
+        cluster_id:
+          type: string
+        name:
+          type: string
+        gate_a_status:
+          type: string
+          enum: [candidate, passed, failed]
+        gate_a_notes:
+          type: string
+    CellSummary:
+      type: object
+      required: [cell_id, centroid, latest_estimate]
+      properties:
+        cell_id:
+          type: string
+        centroid:
+          $ref: "#/components/schemas/Point"
+        latest_estimate:
+          $ref: "#/components/schemas/EstimateSummary"
+    CellDetail:
+      type: object
+      required:
+        - cell_id
+        - estimate
+        - resolution
+        - reference_caveat
+        - medical_directive_caveat
+      properties:
+        cell_id:
+          type: string
+        estimate:
+          $ref: "#/components/schemas/EstimateSummary"
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+        reference_caveat:
+          type: string
+        medical_directive_caveat:
+          type: string
+    EstimateSummary:
+      type: object
+      required: [estimated_aqi, confidence, claim_status, updated_at]
+      properties:
+        estimated_aqi:
+          type: number
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        claim_status:
+          type: string
+          enum: [pending_backtest, measured, insufficient_data]
+        updated_at:
+          type: string
+          format: date-time
+    Resolution:
+      type: object
+      required: [rationale_text, sensors, confidence_factors]
+      properties:
+        rationale_text:
+          type: string
+        confidence_factors:
+          type: object
+          additionalProperties: true
+        sensors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResolutionSensor"
+    ResolutionSensor:
+      type: object
+      required: [sensor_id, weight, decision, reason_codes, reputation_score_at_commit]
+      properties:
+        sensor_id:
+          type: string
+        weight:
+          type: number
+        decision:
+          type: string
+          enum: [trusted, downweighted, ignored]
+        reason_codes:
+          type: array
+          items:
+            type: string
+        reputation_score_at_commit:
+          type: number
+    SensorReputation:
+      type: object
+      required:
+        - sensor_id
+        - reputation_score
+        - features
+        - evidence_window
+        - affected_estimates
+      properties:
+        sensor_id:
+          type: string
+        reputation_score:
+          type: number
+        features:
+          type: object
+          properties:
+            agreement_score:
+              type: number
+            channel_agreement_score:
+              type: number
+            uptime_score:
+              type: number
+            humidity_sensitivity_score:
+              type: number
+            volatility_score:
+              type: number
+            drift_score:
+              type: number
+            indoor_hint_score:
+              type: number
+        evidence_window:
+          type: object
+          required: [start, end]
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        affected_estimates:
+          type: array
+          items:
+            type: string
+    DegradedSensorShowcase:
+      type: object
+      required:
+        - sensor_id
+        - cell_id
+        - raw_or_static_estimate
+        - aircord_estimate
+        - reputation_reason
+      properties:
+        sensor_id:
+          type: string
+        cell_id:
+          type: string
+        raw_or_static_estimate:
+          type: number
+        aircord_estimate:
+          type: number
+        reputation_reason:
+          type: string
+    BacktestRequest:
+      type: object
+      required: [window_start, window_end]
+      properties:
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+    BacktestResult:
+      type: object
+      required: [backtest_run_id, status, claim_status, summaries]
+      properties:
+        backtest_run_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, passed, failed, insufficient_data]
+        claim_status:
+          type: string
+          enum: [pending, measured, no_claim]
+        failure_reason:
+          type: string
+          nullable: true
+        summaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/BacktestSummary"
+    BacktestSummary:
+      type: object
+      required: [segment, method, observation_count, mean_absolute_error]
+      properties:
+        segment:
+          type: string
+          enum: [all, healthy, degraded]
+        method:
+          type: string
+          enum: [raw_purpleair, static_correction, aircord]
+        observation_count:
+          type: integer
+        mean_absolute_error:
+          type: number
+        median_absolute_error:
+          type: number
+    Point:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
