@@ -95,14 +95,16 @@ auditable and enough to show memory changing outcomes.
 - Train a model: too broad and harder to explain.
 - Use only static EPA correction: does not prove per-sensor memory.
 
-## Decision: Defer behavioral vector similarity until after gates
+## Decision: Commit behavioral fingerprint self-similarity for drift detection
 
-**Rationale**: CockroachDB Distributed Vector Indexing is valid only if the
-project implements real behavioral fingerprints and validates similarity. That
-is useful, but Gate A, Gate B, and the degraded-sensor memory beat are higher
-priority.
+**Rationale**: CockroachDB Distributed Vector Indexing is the committed second
+CockroachDB tool for real behavioral fingerprints. The MVP uses hand-crafted
+numeric feature vectors and self-similarity distance between current and
+recent-history fingerprints as a drift signal feeding reputation. Cross-sensor
+trust propagation by nearest-neighbor similarity remains stretch work until it
+has hold-out validation against monitor-anchored sensors.
 
 **Alternatives considered**:
 - Embed raw readings for vector search: not defensible and not load-bearing.
-- Skip vector indexing entirely: acceptable for MVP if the core gates consume
-  available time.
+- Skip vector indexing entirely: rejected because self-similarity drift
+  detection is now load-bearing for the reputation loop.

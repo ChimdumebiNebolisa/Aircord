@@ -148,39 +148,48 @@ affected by that reputation.
   monitor when available, A/B channel divergence, missingness or uptime,
   last-seen recency, humidity sensitivity, volatility, drift versus prior
   behavior, and likely indoor or mislabeled hints when available.
-- **FR-006**: Aircord MUST compute a cell-level air-quality estimate using
+- **FR-006**: Aircord MUST compute a per-sensor behavioral fingerprint embedding
+  from auditable numeric features and use self-similarity between the current
+  fingerprint and recent-history fingerprint as the drift signal feeding
+  reputation. This is required for the MVP.
+- **FR-007**: Aircord SHOULD extend trust to sensors far from any monitor by
+  nearest-neighbor similarity to monitor-anchored sensors
+  (reputation-by-analogy), stated as a validated assumption: hold out anchored
+  sensors, predict reliability from neighbors, and measure error. This
+  cross-sensor propagation MAY be deferred as a stretch.
+- **FR-008**: Aircord MUST compute a cell-level air-quality estimate using
   PurpleAir readings weighted by learned reputation and informed by nearby
   regulatory monitor context.
-- **FR-007**: Aircord MUST compute and display confidence for each estimate
+- **FR-009**: Aircord MUST compute and display confidence for each estimate
   based on source quality, agreement, recency, and reputation evidence.
-- **FR-008**: Every estimate MUST include a resolution record explaining which
+- **FR-010**: Every estimate MUST include a resolution record explaining which
   sensors were trusted, downweighted, or ignored and why.
-- **FR-009**: Every reputation update, estimate, resolution, and source snapshot
+- **FR-011**: Every reputation update, estimate, resolution, and source snapshot
   reference MUST be auditable after the estimate is produced.
-- **FR-010**: Aircord MUST demonstrate one degraded PurpleAir sensor whose
+- **FR-012**: Aircord MUST demonstrate one degraded PurpleAir sensor whose
   remembered track record causes downweighting and visibly changes an estimate.
-- **FR-011**: Aircord MUST support a paired-location backtest comparing raw
+- **FR-013**: Aircord MUST support a paired-location backtest comparing raw
   PurpleAir, static correction, and Aircord's trust-weighted method against
   regulatory monitor references.
-- **FR-012**: The backtest MUST report measured results only after aligned time
+- **FR-014**: The backtest MUST report measured results only after aligned time
   series are reconstructed and evaluated.
-- **FR-013**: Aircord MUST distinguish healthy-sensor and degraded-sensor
+- **FR-015**: Aircord MUST distinguish healthy-sensor and degraded-sensor
   backtest results when the data supports that split.
-- **FR-014**: Aircord MUST explicitly state that regulatory monitors are the
+- **FR-016**: Aircord MUST explicitly state that regulatory monitors are the
   reference, not absolute ground truth.
-- **FR-015**: Aircord MUST explicitly state that PurpleAir is points-billed, not
+- **FR-017**: Aircord MUST explicitly state that PurpleAir is points-billed, not
   fully free.
-- **FR-016**: Aircord MUST position AirNow Fire & Smoke Map and Google Maps as
+- **FR-018**: Aircord MUST position AirNow Fire & Smoke Map and Google Maps as
   capable incumbents and identify Aircord's edge as learned, per-sensor,
   auditable memory.
-- **FR-017**: Aircord MUST NOT present itself as a health-advice engine or give
+- **FR-019**: Aircord MUST NOT present itself as a health-advice engine or give
   medical directives.
-- **FR-018**: Aircord MUST keep the first release scoped to one metro cluster and
+- **FR-020**: Aircord MUST keep the first release scoped to one metro cluster and
   MUST exclude national coverage, mobile apps, user accounts, and forecasting.
-- **FR-019**: Aircord MUST make Gate A pass/fail explicit: enough paired data,
+- **FR-021**: Aircord MUST make Gate A pass/fail explicit: enough paired data,
   visible disagreement, degraded candidates, and labeled anchors in the chosen
   metro cluster.
-- **FR-020**: Aircord MUST make Gate B pass/fail explicit: computable aligned
+- **FR-022**: Aircord MUST make Gate B pass/fail explicit: computable aligned
   time series and three-method error comparison.
 
 ### Scope Boundaries and Claim Discipline *(mandatory for Aircord)*
@@ -196,6 +205,9 @@ affected by that reputation.
   anchors, live disagreement, and at least one degraded-sensor candidate.
 - Claims requiring Gate B evidence: any accuracy number or statement that
   Aircord beats static correction on degraded sensors.
+- Trust-by-analogy claims must never be described as exact; Aircord must state
+  the similar-behavior-implies-similar-reliability assumption and show hold-out
+  validation before using cross-sensor propagation as evidence.
 - Deferred scope: national app, mobile app, accounts, health advice, forecasting,
   and any feature that does not improve trust weighting, measured comparison, or
   auditability.
@@ -256,6 +268,6 @@ affected by that reputation.
   one metro cluster.
 - The first release can use a minimal map and detail panel because the core
   product proof is trust reconciliation and auditability.
-- Behavioral fingerprint similarity is optional unless it is implemented with
-  real features and validation; it must not distract from Gate A, Gate B, or the
-  degraded-sensor memory beat.
+- Behavioral fingerprint self-similarity drift detection is required for the
+  MVP; cross-sensor trust propagation by nearest-neighbor similarity may be
+  deferred as a stretch after hold-out validation.

@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-Version change: template -> 1.0.0
+Version change: 1.0.0 -> 1.1.0
 Modified principles:
 - Template principle 1 -> I. Spec-First Development
 - Template principle 2 -> II. Honest Air-Quality Claims
@@ -109,16 +109,19 @@ comparison before UI polish.
 - AWS services have specific roles: Lambda pollers, S3 raw snapshots, and
   Bedrock explanation/reasoning outside the database transaction.
 - CockroachDB Managed MCP Server is valid for live memory interrogation.
-  Distributed Vector Indexing is valid only if behavioral fingerprint similarity
-  is implemented in a real, testable way.
+  Distributed Vector Indexing is a committed second CockroachDB tool for
+  behavioral fingerprinting and self-similarity drift detection. Cross-sensor
+  trust propagation by nearest-neighbor similarity is optional stretch work and
+  must be validated before use. Claims that the product is impossible without
+  CockroachDB are prohibited.
 
 ## Development Workflow and Quality Gates
 
 1. Specifications MUST preserve locked product decisions before planning.
 2. Plans MUST include research.md, data-model.md, contracts when APIs are
    planned, quickstart.md, and explicit Gate A/Gate B validation steps.
-3. Tasks MUST put Gate A and Gate B before frontend polish and before any
-   optional vector-indexing work.
+3. Tasks MUST put Gate A and Gate B before frontend polish and before optional
+   cross-sensor trust propagation work.
 4. Before implementation, spec.md, plan.md, research.md, data-model.md,
    contracts, quickstart.md, and tasks.md MUST be checked for contradictions.
 5. Any feature that does not serve the reputation loop, measured backtest,
@@ -139,4 +142,4 @@ Compliance review is mandatory during `/speckit-plan`, `/speckit-tasks`, and
 pre-implementation analysis. Violations must be resolved in the spec, plan, or
 tasks before implementation proceeds.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-06 | **Last Amended**: 2026-07-06
+**Version**: 1.1.0 | **Ratified**: 2026-07-06 | **Last Amended**: 2026-07-07

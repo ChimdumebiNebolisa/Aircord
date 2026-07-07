@@ -7,6 +7,7 @@ MetroCluster 1--* Cell
 MetroCluster 1--* Monitor
 MetroCluster 1--* Sensor
 Sensor 1--* SensorReading
+Sensor 1--* SensorEmbedding
 Monitor 1--* MonitorReading
 Sensor 1--1 SensorReputation
 Cell 1--* Estimate
@@ -120,6 +121,27 @@ Validation rules:
 - A reading with stale `last_seen_at` or missing key fields remains auditable but
   receives lower quality contribution.
 
+## SensorEmbedding
+
+Table: `sensor_embeddings`
+
+Behavioral fingerprint for a sensor over a bounded evidence window.
+
+Fields:
+- `sensor_id`.
+- `behavioral_fingerprint`: vector derived from hand-crafted numeric behavior
+  features.
+- `feature_summary`: JSON summary of the numeric features used to create the
+  fingerprint.
+- `window_start`, `window_end`.
+- `updated_at`.
+- `version`: integer used for serializable retry checks.
+
+Validation rules:
+- Fingerprints must be derived from auditable numeric features, not naive raw
+  reading or text embeddings.
+- Every embedding update must tie to an audit row.
+
 ## SensorReputation
 
 Learned memory state for a PurpleAir sensor.
@@ -132,7 +154,8 @@ Fields:
 - `uptime_score`.
 - `humidity_sensitivity_score`.
 - `volatility_score`.
-- `drift_score`.
+- `drift_score`: computed via self-similarity distance between the sensor's
+  current behavioral fingerprint and its recent-history fingerprint.
 - `indoor_hint_score`.
 - `evidence_window_start`, `evidence_window_end`.
 - `last_updated_at`.

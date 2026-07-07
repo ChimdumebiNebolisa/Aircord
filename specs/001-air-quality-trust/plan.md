@@ -53,11 +53,12 @@ Gate A and one degraded-sensor showcase.
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- Spec-first: PASS. This plan traces directly to FR-001 through FR-020.
+- Spec-first: PASS. This plan traces directly to FR-001 through FR-022.
 - Honest claims: PASS. Accuracy claims remain pending until Gate B; monitors
   are references, not truth; PurpleAir billing and incumbents stay explicit.
-- Memory changes outcomes: PASS. The degraded-sensor showcase is a required
-  deliverable before polish.
+- Memory changes outcomes: PASS. Behavioral-fingerprint self-similarity drift
+  detection and the degraded-sensor showcase are required deliverables before
+  polish.
 - Computed metrics only: PASS. Backtest outputs are required before any measured
   improvement claim.
 - Scope discipline: PASS. One metro cluster, no accounts, no mobile, no
@@ -138,8 +139,10 @@ planning decisions are:
   and reconciliation.
 - CockroachDB is the single transactional memory store; S3 stores raw snapshots.
 - Reconciliation uses a compute-then-short-transaction pattern.
-- Vector indexing is deferred unless behavioral fingerprints are implemented
-  and validated after the core memory beat works.
+- Distributed Vector Indexing is committed for behavioral fingerprints and
+  self-similarity drift detection in core reputation. Cross-sensor
+  trust-propagation by nearest-neighbor similarity is stretch only, and naive
+  raw-reading embeddings are excluded.
 
 ## Phase 1: Design & Contracts
 
@@ -157,8 +160,8 @@ Design artifacts:
   features were added.
 - Honest claims: PASS. Contracts expose `reference_caveat`,
   `claim_status`, and backtest pass/fail state.
-- Memory changes outcomes: PASS. Data model includes reputation, weights, and
-  comparison outputs needed to prove estimate changes.
+- Memory changes outcomes: PASS. Data model includes sensor embeddings,
+  reputation, weights, and comparison outputs needed to prove estimate changes.
 - Computed metrics only: PASS. Backtest results include measured rows or an
   explicit failed/pending status.
 - Scope discipline: PASS. No accounts, national browsing, mobile app,
