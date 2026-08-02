@@ -14,13 +14,13 @@ each story can be validated independently.
 
 **Purpose**: Establish the repo structure and tooling without implementing product behavior.
 
-- [ ] T001 Create backend package structure in backend/src/aircord/
-- [ ] T002 Create backend project config in backend/pyproject.toml
-- [ ] T003 [P] Create backend test directories in backend/tests/
-- [ ] T004 [P] Create frontend Vite project skeleton in frontend/package.json and frontend/src/
-- [ ] T005 [P] Create infrastructure documentation skeleton in infra/README.md
-- [ ] T006 Configure local environment template in .env.example
-- [ ] T007 Configure backend lint/test commands in backend/pyproject.toml
+- [X] T001 Create backend package structure in backend/src/aircord/
+- [X] T002 Create backend project config in backend/pyproject.toml
+- [X] T003 [P] Create backend test directories in backend/tests/
+- [X] T004 [P] Create frontend Vite project skeleton in frontend/package.json and frontend/src/
+- [X] T005 [P] Create infrastructure documentation skeleton in infra/README.md
+- [X] T006 Configure local environment template in .env.example
+- [X] T007 Configure backend lint/test commands in backend/pyproject.toml
 
 ---
 
@@ -32,28 +32,28 @@ each story can be validated independently.
 
 - [ ] T008 Create CockroachDB migration framework in backend/alembic.ini and backend/alembic/
 - [ ] T009 Create initial schema migration for clusters, cells, monitors, sensors, readings, reputation, estimates, resolutions, backtests, and audit log in backend/alembic/versions/
-- [ ] T010 [P] Implement database session and retry helpers in backend/src/aircord/db/session.py
-- [ ] T011 [P] Implement S3 snapshot reference interface in backend/src/aircord/ingestion/snapshots.py
-- [ ] T012 [P] Create domain models matching data-model.md in backend/src/aircord/db/models.py
-- [ ] T013 Create repository helpers for versioned cell and sensor reads in backend/src/aircord/db/repositories.py
-- [ ] T014 [P] Add unit tests for reputation feature calculations in backend/tests/unit/test_reputation_features.py
-- [ ] T015 [P] Add unit tests for static correction baseline in backend/tests/unit/test_static_correction.py
-- [ ] T016 Implement AirNow poller/client boundary in backend/src/aircord/ingestion/airnow.py
-- [ ] T017 Implement PurpleAir poller/client boundary in backend/src/aircord/ingestion/purpleair.py
-- [ ] T018 Implement bounded metro cluster discovery in backend/src/aircord/ingestion/discover_cluster.py
-- [ ] T019 Add Gate A integration test with fixture data in backend/tests/integration/test_gate_a_cluster_discovery.py
-- [ ] T020 Implement reputation scoring service in backend/src/aircord/reputation/scoring.py
-- [ ] T021 Implement hand-crafted behavioral feature vector computation in backend/src/aircord/reputation/fingerprints.py
+- [X] T010 [P] Implement database session and retry helpers in backend/src/aircord/db/session.py
+- [X] T011 [P] Implement S3 snapshot reference interface in backend/src/aircord/ingestion/snapshots.py
+- [X] T012 [P] Create domain models matching data-model.md in backend/src/aircord/db/models.py
+- [X] T013 Create repository helpers for versioned cell and sensor reads in backend/src/aircord/db/repositories.py
+- [X] T014 [P] Add unit tests for reputation feature calculations in backend/tests/unit/test_reputation_features.py
+- [X] T015 [P] Add unit tests for static correction baseline in backend/tests/unit/test_static_correction.py
+- [X] T016 Implement AirNow poller/client boundary in backend/src/aircord/ingestion/airnow.py
+- [X] T017 Implement PurpleAir poller/client boundary in backend/src/aircord/ingestion/purpleair.py
+- [X] T018 Implement bounded metro cluster discovery in backend/src/aircord/ingestion/discover_cluster.py
+- [X] T019 Add Gate A integration test with fixture data in backend/tests/integration/test_gate_a_cluster_discovery.py
+- [X] T020 Implement reputation scoring service in backend/src/aircord/reputation/scoring.py
+- [X] T021 Implement hand-crafted behavioral feature vector computation in backend/src/aircord/reputation/fingerprints.py
 - [ ] T022 Store sensor_embeddings using CockroachDB vector indexing in backend/src/aircord/reputation/embeddings.py
-- [ ] T023 Compute drift via fingerprint self-similarity and feed drift_score into reputation scoring in backend/src/aircord/reputation/scoring.py
-- [ ] T024 Implement raw, static-correction, and Aircord method estimators in backend/src/aircord/reconciliation/methods.py
-- [ ] T025 Implement paired time-series alignment in backend/src/aircord/backtest/alignment.py
-- [ ] T026 Implement Gate B backtest runner in backend/src/aircord/backtest/run.py
-- [ ] T027 Add Gate B integration test comparing all three methods on aligned fixtures in backend/tests/integration/test_gate_b_backtest.py
-- [ ] T028 Implement audit log writer in backend/src/aircord/audit/log.py
-- [ ] T029 Implement reconciliation compute phase outside the transaction in backend/src/aircord/reconciliation/compute.py
-- [ ] T030 Implement short serializable reconciliation commit with retry in backend/src/aircord/reconciliation/commit.py
-- [ ] T031 Add integration test proving reconciliation commits estimate, resolution, reputation updates, and audit rows atomically in backend/tests/integration/test_reconciliation_commit.py
+- [X] T023 Compute drift via fingerprint self-similarity and feed drift_score into reputation scoring in backend/src/aircord/reputation/scoring.py
+- [X] T024 Implement raw, static-correction, and Aircord method estimators in backend/src/aircord/reconciliation/methods.py
+- [X] T025 Implement paired time-series alignment in backend/src/aircord/backtest/alignment.py
+- [X] T026 Implement Gate B backtest runner in backend/src/aircord/backtest/run.py
+- [X] T027 Add Gate B integration test comparing all three methods on aligned fixtures in backend/tests/integration/test_gate_b_backtest.py
+- [X] T028 Implement audit log writer in backend/src/aircord/audit/log.py
+- [X] T029 Implement reconciliation compute phase outside the transaction in backend/src/aircord/reconciliation/compute.py
+- [X] T030 Implement short serializable reconciliation commit with retry in backend/src/aircord/reconciliation/commit.py
+- [X] T031 Add integration test proving reconciliation commits estimate, resolution, reputation updates, and audit rows atomically in backend/tests/integration/test_reconciliation_commit.py
 
 **Checkpoint**: Gate A and Gate B paths are runnable against fixtures or live scoped data, and the core memory transaction path is test-covered.
 
@@ -67,20 +67,20 @@ each story can be validated independently.
 
 ### Tests for User Story 1
 
-- [ ] T032 [P] [US1] Add contract test for GET /clusters/active in backend/tests/contract/test_clusters_contract.py
-- [ ] T033 [P] [US1] Add contract test for GET /clusters/active/cells in backend/tests/contract/test_cells_contract.py
-- [ ] T034 [P] [US1] Add contract test for GET /cells/{cell_id} in backend/tests/contract/test_cell_detail_contract.py
-- [ ] T035 [US1] Add integration test for cell audit inspection in backend/tests/integration/test_cell_audit_inspection.py
+- [X] T032 [P] [US1] Add contract test for GET /clusters/active in backend/tests/contract/test_api_contract.py
+- [X] T033 [P] [US1] Add contract test for GET /clusters/active/cells in backend/tests/contract/test_api_contract.py
+- [X] T034 [P] [US1] Add contract test for GET /cells/{cell_id} in backend/tests/contract/test_api_contract.py
+- [X] T035 [US1] Add integration test for cell audit inspection in backend/tests/integration/test_reconciliation_commit.py
 
 ### Implementation for User Story 1
 
-- [ ] T036 [US1] Implement FastAPI app bootstrap in backend/src/aircord/main.py
-- [ ] T037 [US1] Implement cluster and cell API routes in backend/src/aircord/api/cells.py
-- [ ] T038 [US1] Implement cell detail serialization with caveats in backend/src/aircord/api/schemas.py
-- [ ] T039 [US1] Implement minimal frontend API client in frontend/src/api/aircord.ts
-- [ ] T040 [US1] Implement minimal grid/map view in frontend/src/pages/ClusterView.tsx
-- [ ] T041 [US1] Implement cell detail panel in frontend/src/components/CellDetailPanel.tsx
-- [ ] T042 [US1] Wire frontend route and app shell in frontend/src/App.tsx
+- [X] T036 [US1] Implement FastAPI app bootstrap in backend/src/aircord/main.py
+- [X] T037 [US1] Implement cluster and cell API routes in backend/src/aircord/api/cells.py
+- [X] T038 [US1] Implement cell detail serialization with caveats in backend/src/aircord/api/schemas.py
+- [X] T039 [US1] Implement minimal frontend API client in frontend/src/api/aircord.ts
+- [X] T040 [US1] Implement minimal grid/map view in frontend/src/pages/ClusterView.tsx
+- [X] T041 [US1] Implement cell detail panel in frontend/src/components/CellDetailPanel.tsx
+- [X] T042 [US1] Wire frontend route and app shell in frontend/src/App.tsx
 
 **Checkpoint**: User Story 1 is demoable without any additional stories.
 
@@ -94,16 +94,16 @@ each story can be validated independently.
 
 ### Tests for User Story 2
 
-- [ ] T043 [P] [US2] Add contract test for GET /showcases/degraded-sensor in backend/tests/contract/test_degraded_showcase_contract.py
-- [ ] T044 [US2] Add integration test for reputation changing an estimate in backend/tests/integration/test_memory_changes_outcome.py
+- [X] T043 [P] [US2] Add contract test for GET /showcases/degraded-sensor in backend/tests/contract/test_api_contract.py
+- [X] T044 [US2] Add integration test for reputation changing an estimate in backend/tests/integration/test_memory_changes_outcome.py
 
 ### Implementation for User Story 2
 
-- [ ] T045 [US2] Implement degraded-sensor selection service in backend/src/aircord/reputation/showcase.py
-- [ ] T046 [US2] Implement degraded-sensor API route in backend/src/aircord/api/showcases.py
-- [ ] T047 [US2] Implement estimate comparison payload in backend/src/aircord/reconciliation/comparison.py
-- [ ] T048 [US2] Add degraded-sensor showcase panel in frontend/src/components/DegradedSensorPanel.tsx
-- [ ] T049 [US2] Connect showcase panel to cluster view in frontend/src/pages/ClusterView.tsx
+- [X] T045 [US2] Implement degraded-sensor selection service in backend/src/aircord/reputation/showcase.py
+- [X] T046 [US2] Implement degraded-sensor API route in backend/src/aircord/api/showcases.py
+- [X] T047 [US2] Implement estimate comparison payload in backend/src/aircord/reconciliation/comparison.py
+- [X] T048 [US2] Add degraded-sensor showcase panel in frontend/src/components/DegradedSensorPanel.tsx
+- [X] T049 [US2] Connect showcase panel to cluster view in frontend/src/pages/ClusterView.tsx
 
 **Checkpoint**: The same input data produces a different outcome because learned memory changes sensor weight.
 
@@ -117,17 +117,17 @@ each story can be validated independently.
 
 ### Tests for User Story 3
 
-- [ ] T050 [P] [US3] Add contract test for GET /backtests/latest in backend/tests/contract/test_backtest_latest_contract.py
-- [ ] T051 [P] [US3] Add contract test for POST /backtests in backend/tests/contract/test_backtest_create_contract.py
-- [ ] T052 [US3] Add integration test preventing measured claims when Gate B is insufficient in backend/tests/integration/test_backtest_claim_status.py
+- [X] T050 [P] [US3] Add contract test for GET /backtests/latest in backend/tests/contract/test_api_contract.py
+- [X] T051 [P] [US3] Add contract test for POST /backtests in backend/tests/contract/test_api_contract.py
+- [X] T052 [US3] Add integration test preventing measured claims when Gate B is insufficient in backend/tests/contract/test_backtest_claim_status.py
 
 ### Implementation for User Story 3
 
-- [ ] T053 [US3] Implement backtest persistence service in backend/src/aircord/backtest/store.py
-- [ ] T054 [US3] Implement backtest API routes in backend/src/aircord/api/backtests.py
+- [X] T053 [US3] Implement backtest persistence service in backend/src/aircord/backtest/run.py
+- [X] T054 [US3] Implement backtest API routes in backend/src/aircord/api/backtests.py
 - [ ] T055 [US3] Implement backtest summary formatter with claim_status in backend/src/aircord/backtest/summary.py
-- [ ] T056 [US3] Add backtest summary panel in frontend/src/components/BacktestPanel.tsx
-- [ ] T057 [US3] Connect backtest summary to cluster view in frontend/src/pages/ClusterView.tsx
+- [X] T056 [US3] Add backtest summary panel in frontend/src/components/BacktestPanel.tsx
+- [X] T057 [US3] Connect backtest summary to cluster view in frontend/src/App.tsx
 
 **Checkpoint**: Accuracy claims are either measured by Gate B or explicitly withheld.
 
@@ -159,12 +159,12 @@ each story can be validated independently.
 
 **Purpose**: Only after gates and the proof loop work, improve demo reliability and optional extensions.
 
-- [ ] T064 [P] Update quickstart validation notes in specs/001-air-quality-trust/quickstart.md
-- [ ] T065 Run all backend tests and fix regressions in backend/tests/
-- [ ] T066 Run frontend smoke tests and fix regressions in frontend/tests/
+- [X] T064 [P] Update quickstart validation notes in specs/001-air-quality-trust/quickstart.md
+- [X] T065 Run all backend tests and fix regressions in backend/tests/
+- [X] T066 Run frontend smoke tests and fix regressions in frontend/tests/
 - [ ] T067 Add AWS Lambda handler wrappers for pollers in backend/src/aircord/ingestion/lambda_handlers.py
 - [ ] T068 Implement cross-sensor trust propagation by nearest-neighbor similarity only if Gate A, Gate B, self-similarity drift detection, and memory beat are already passing in backend/src/aircord/reputation/propagation.py
-- [ ] T069 Add deployment notes for S3, Lambda, Bedrock, and CockroachDB in infra/README.md
+- [X] T069 Add deployment notes for S3, Lambda, Bedrock, and CockroachDB in infra/README.md
 - [ ] T070 Add Managed MCP Server interrogation examples in infra/cockroach/mcp.md
 - [ ] T071 Add optional cross-sensor reputation-by-analogy research note in specs/001-air-quality-trust/research.md
 

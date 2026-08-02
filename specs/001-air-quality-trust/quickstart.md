@@ -7,10 +7,14 @@ not claim the app is implemented yet.
 
 - Python 3.12
 - Node.js 20+
-- CockroachDB connection string for local or managed cluster
-- S3 bucket or local S3-compatible bucket for raw snapshots
-- AirNow API access for regulatory monitor data
-- PurpleAir API access with enough points for one metro cluster
+- CockroachDB connection string for production-like validation (optional for
+  local fixture mode)
+- S3 bucket or local S3-compatible bucket for raw snapshots (optional for the
+  local fixture path)
+- AirNow API access for live regulatory monitor data (required only for live
+  Gate A)
+- PurpleAir API access with enough points for one metro cluster (required only
+  for live Gate A)
 - Optional Bedrock access for generated explanation text; numeric audit records
   must still work if Bedrock is unavailable
 
@@ -27,6 +31,10 @@ npm install
 
 Expected outcome: backend and frontend dependencies install without creating
 any production data.
+
+For a credential-free local run, the backend seeds a deterministic fixture
+cluster. It is useful for contract/integration verification but must not be
+reported as live Gate A evidence.
 
 ## Gate A: Live Paired Disagreement
 
@@ -46,7 +54,9 @@ Expected outcome:
 - No national scan is performed.
 
 Pass rule: Gate A passes only if there are enough paired anchors, visible
-disagreement, and degraded-sensor candidates for the MVP story.
+disagreement, and degraded-sensor candidates for the MVP story. The local
+fixture command reports `mode: fixture`; live proof still requires the two
+source adapters and credentials.
 
 ## Gate B: Computable Backtest
 
