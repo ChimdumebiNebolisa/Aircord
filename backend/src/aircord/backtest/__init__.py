@@ -1,0 +1,2 @@
+"""Aligned paired-sensor backtesting."""
+
