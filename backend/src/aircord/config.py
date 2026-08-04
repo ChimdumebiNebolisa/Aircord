@@ -8,6 +8,7 @@ ROOT_DIR = Path(__file__).resolve().parents[3]
 DATA_DIR = Path(os.getenv("AIRCORD_DATA_DIR", ROOT_DIR / "data"))
 DB_PATH = Path(os.getenv("AIRCORD_DB_PATH", DATA_DIR / "aircord.sqlite3"))
 MODE = os.getenv("AIRCORD_MODE", "fixture")
+DATABASE_URL = os.getenv("DATABASE_URL")
 AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
 PURPLEAIR_API_KEY = os.getenv("PURPLEAIR_API_KEY")
 BEDROCK_MODEL_ID = os.getenv("AIRCORD_BEDROCK_MODEL_ID")

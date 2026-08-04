@@ -19,6 +19,7 @@ frontend/dist/
 .env
 .env.*
 !.env.example
+.certs/
 data/
 *.sqlite3
 
