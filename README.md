@@ -68,6 +68,51 @@ the sensor and writes one normalized `sensor_readings` row plus one
 `audit_log` row in CockroachDB. It exits without making a network request when a
 required variable is missing.
 
+## AWS Lambda PurpleAir ingestion
+
+The Lambda entry point wraps the same ingestion path as the local smoke:
+
+```text
+aircord.ingestion.lambda_handlers.purpleair_ingest_handler
+```
+
+Configure these Lambda environment variables:
+
+```text
+DATABASE_URL
+PURPLEAIR_API_KEY
+PURPLEAIR_SENSOR_ID
+AWS_REGION
+S3_BUCKET
+```
+
+`DATABASE_CA_CERT` is optional. If set, package the CockroachDB CA certificate
+with the function or a Lambda layer and set the variable to its Lambda runtime
+path. The function needs outbound network access to CockroachDB on port 26257.
+
+The execution role needs `s3:PutObject` for the raw snapshot prefix, for
+example `arn:aws:s3:::<bucket>/raw/purpleair/*`. Standard CloudWatch Logs
+permissions are also required for Lambda execution logging.
+
+After deploying the package, invoke it manually with the AWS CLI:
+
+```powershell
+aws lambda invoke `
+  --function-name <function-name> `
+  --invocation-type RequestResponse `
+  --cli-binary-format raw-in-base64-out `
+  --payload '{}' `
+  lambda-response.json
+Get-Content lambda-response.json
+```
+
+The response contains `sensor_id`, `s3_key`, `reading_id`, and `audit_id`.
+To schedule later with EventBridge, create a rule such as
+`rate(15 minutes)`, grant that rule permission to invoke the function with
+`lambda:add-permission`, and attach the Lambda ARN with
+`events:put-targets`. Keep the local smoke command as the first diagnostic
+path before troubleshooting a scheduled invocation.
+
 ## Tests
 
 Install the backend in editable mode with development dependencies:

@@ -162,7 +162,7 @@ each story can be validated independently.
 - [X] T064 [P] Update quickstart validation notes in specs/001-air-quality-trust/quickstart.md
 - [X] T065 Run all backend tests and fix regressions in backend/tests/
 - [X] T066 Run frontend smoke tests and fix regressions in frontend/tests/
-- [ ] T067 Add AWS Lambda handler wrappers for pollers in backend/src/aircord/ingestion/lambda_handlers.py
+- [X] T067 Add AWS Lambda handler wrappers for pollers in backend/src/aircord/ingestion/lambda_handlers.py
 - [ ] T068 Implement cross-sensor trust propagation by nearest-neighbor similarity only if Gate A, Gate B, self-similarity drift detection, and memory beat are already passing in backend/src/aircord/reputation/propagation.py
 - [X] T069 Add deployment notes for S3, Lambda, Bedrock, and CockroachDB in infra/README.md
 - [ ] T070 Add Managed MCP Server interrogation examples in infra/cockroach/mcp.md
