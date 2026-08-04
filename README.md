@@ -102,6 +102,43 @@ fails instead of silently storing `0.0`. A raw PurpleAir PM2.5 value of `0.0`
 is preserved as reported, but a downweighted sensor does not make the whole
 cell estimate zero while a monitor reference is available.
 
+## Backtest
+
+Run the bounded live comparison for the LA sensor and AirNow monitor:
+
+```powershell
+python backend/scripts/backtest_aircord.py --sensor-id 54917 --monitor-id 060371302 --window-days 3
+```
+
+The command reads normalized PurpleAir history from CockroachDB and pairs it
+with the nearest available AirNow monitor observation. It stores the run and
+summaries in `backtest_runs` and `backtest_summaries`, and writes a
+`backtest_runner` audit row. At least three valid aligned observations are
+required before any MAE is emitted; otherwise the result is explicitly
+`insufficient_data` with `claim_status=no_claim`.
+
+Expected output shape:
+
+```text
+Aircord backtest
+status: passed / claim_status=measured
+data source: CockroachDB normalized PurpleAir readings + AirNow monitor snapshot
+sample count: <n>
+Raw PurpleAir MAE: <value>
+Static correction MAE: <value>
+Aircord MAE: <value>
+degraded sample count: <n>
+degraded Aircord MAE: <value or insufficient data>
+caveats:
+- <data-window and cross-source caveats>
+```
+
+The live MVP may have only accumulated snapshots and one current monitor row,
+so a passed run is still a limited measured comparison, not a claim that
+Aircord is more accurate. PurpleAir PM2.5 and AirNow AQI are different units.
+Use the existing SQLite fixture backtest for deterministic development checks:
+`python -m aircord.backtest.run --cluster greater-la --window-days 14`.
+
 ## AWS Lambda PurpleAir ingestion
 
 The Lambda entry point wraps the same ingestion path as the local smoke:
