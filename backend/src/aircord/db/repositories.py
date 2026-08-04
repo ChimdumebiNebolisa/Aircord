@@ -16,6 +16,9 @@ from aircord.db.vector_schema import COCKROACH_VECTOR_INDEX, COCKROACH_VECTOR_TA
 from aircord.reputation.vector import vector_literal
 
 
+_COCKROACH_VECTOR_SCHEMA_READY = False
+
+
 def _dict(row: Any) -> dict[str, Any] | None:
     return dict(row) if row is not None else None
 
@@ -428,7 +431,10 @@ class Repository:
             transaction.store_fingerprint(sensor_id, features, updated_at)
 
     def ensure_vector_schema(self) -> None:
+        global _COCKROACH_VECTOR_SCHEMA_READY
         if self.backend != "cockroach":
+            return
+        if _COCKROACH_VECTOR_SCHEMA_READY:
             return
         with self.transaction() as transaction:
             setting = transaction.one("SHOW CLUSTER SETTING feature.vector_index.enabled")
@@ -441,6 +447,7 @@ class Repository:
             if not any(row.get("index_name") == VECTOR_INDEX_NAME for row in indexes):
                 transaction.execute("SET sql_safe_updates = false")
                 transaction.execute(COCKROACH_VECTOR_INDEX)
+        _COCKROACH_VECTOR_SCHEMA_READY = True
 
     def upsert_sensor_embedding(
         self,

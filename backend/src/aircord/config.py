@@ -12,6 +12,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 AIRNOW_API_KEY = os.getenv("AIRNOW_API_KEY")
 PURPLEAIR_API_KEY = os.getenv("PURPLEAIR_API_KEY")
 BEDROCK_MODEL_ID = os.getenv("AIRCORD_BEDROCK_MODEL_ID")
+ALLOWED_ORIGINS = tuple(
+    origin.strip()
+    for origin in os.getenv(
+        "AIRCORD_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+)
 
 REFERENCE_CAVEAT = (
     "AirNow regulatory monitors are the evaluation reference for this demo, not absolute truth."

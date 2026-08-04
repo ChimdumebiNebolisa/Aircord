@@ -59,7 +59,101 @@ export type Backtest = {
   }>;
 };
 
+export type DemoSummary = {
+  status: "ok" | "empty";
+  message: string;
+  sensor_id: string;
+  cell_id: string;
+  sensor: {
+    sensor_id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    reputation_score: number | null;
+    last_seen: string | null;
+  } | null;
+  latest_sensor_reading: {
+    reading_id: string;
+    sensor_id: string;
+    pm25_cf1: number | null;
+    pm25_atm: number | null;
+    channel_a: number | null;
+    channel_b: number | null;
+    observed_at: string;
+    raw_s3_key: string | null;
+  } | null;
+  airnow_reference: {
+    monitor: {
+      monitor_id: string;
+      name: string;
+      latest_aqi: number | null;
+      observed_at: string | null;
+    } | null;
+    distance_km: number | null;
+  };
+  sensor_reputation: Record<string, unknown> | null;
+  latest_cell_estimate: {
+    estimate_aqi: number;
+    confidence: number;
+    updated_at: string;
+  } | null;
+  latest_resolution: {
+    resolution_id: string;
+    estimate_aqi: number;
+    confidence: number;
+    reasoning_text: string;
+    sensors_considered: Array<{
+      sensor_id: string;
+      decision: string;
+      weight: number;
+      reputation_score: number;
+    }>;
+  } | null;
+  audit_rows: Array<{
+    audit_id?: string;
+    created_at: string;
+    actor: string;
+    action: string;
+    entity_type: string;
+    entity_id: string;
+    details?: Record<string, unknown>;
+  }>;
+  similarity: {
+    status: "ok" | "empty";
+    message: string;
+    fingerprint_dimensions: number;
+    fingerprint_features: Record<string, number>;
+    nearest: Array<{
+      sensor_id: string;
+      cosine_distance: number;
+      source: string;
+      label?: string;
+    }>;
+  };
+  latest_backtest: {
+    backtest_run_id: string;
+    status: string;
+    claim_status: string;
+    summaries: Array<{
+      segment: string;
+      method: string;
+      observation_count: number;
+      mean_absolute_error: number | null;
+    }>;
+  } | null;
+  caveats: string[];
+  mcp: {
+    status: string;
+    query_path: string;
+    questions: string[];
+    message: string;
+  };
+  reference_caveat: string;
+  medical_directive_caveat: string;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+const DEMO_PATH = import.meta.env.VITE_API_BASE ? "/api/demo-summary" : "/demo-summary.json";
 
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`);
@@ -73,4 +167,5 @@ export const api = {
   cell: (id: string) => get<CellDetail>(`/cells/${id}`),
   showcase: () => get<Showcase>("/showcases/degraded-sensor"),
   backtest: () => get<Backtest>("/backtests/latest"),
+  demoSummary: () => get<DemoSummary>(DEMO_PATH),
 };

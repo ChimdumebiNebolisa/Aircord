@@ -4,6 +4,89 @@ Aircord is a one-metro air-quality trust-memory MVP. The backend uses a local
 SQLite fixture database by default and switches to CockroachDB Cloud for real
 persistence when `DATABASE_URL` is configured.
 
+Project claim: Aircord learns which community air sensors to trust and explains
+why. This is a judge-facing proof surface, not a medical-advice product or a
+broad accuracy claim.
+
+## Demo surface
+
+The shortest local demo path is:
+
+```powershell
+# In the backend environment, set DATABASE_URL and DATABASE_CA_CERT if needed.
+python backend/scripts/demo_status.py
+uvicorn aircord.main:app --reload --port 8000
+```
+
+The read-only API exposes the same CockroachDB-backed result at:
+
+```text
+GET /api/sensors/54917/latest
+GET /api/sensors/54917/memory
+GET /api/sensors/54917/resolution
+GET /api/sensors/54917/audit
+GET /api/sensors/54917/similar
+GET /api/backtests/latest
+GET /api/demo-summary
+```
+
+The Vite page uses `VITE_API_BASE=http://localhost:8000` for the live API. To
+prepare the public static fallback from the current CockroachDB state, run:
+
+```powershell
+python backend/scripts/demo_status.py --write-frontend-snapshot
+cd frontend
+npm run build
+```
+
+For local live rendering, start the API in one shell and the Vite dev server in
+another:
+
+```powershell
+$env:VITE_API_BASE="http://localhost:8000"
+npm run dev
+```
+
+The generated `frontend/public/demo-summary.json` contains only persisted demo
+data, not credentials. The static page reads it when `VITE_API_BASE` is not
+set, so it can be deployed without exposing CockroachDB credentials. Public
+demo URL: not deployed in this repository; use the Vercel preview command in
+the deployment notes below after authenticating the hosting account.
+
+Architecture proof path:
+
+```text
+PurpleAir / AirNow -> S3 raw snapshots -> CockroachDB readings and monitors
+                                      -> reputation -> estimate/resolution -> audit trail
+                                      -> VECTOR(8) fingerprints -> similarity
+                                      -> Managed MCP read-only questions
+                                      -> FastAPI /api/demo-summary -> Vite judge surface
+```
+
+The demo explicitly shows the CockroachDB Cloud persistent memory layer,
+Distributed Vector Indexing, the Managed MCP Server path, AWS S3, Lambda, and
+EventBridge. It also keeps the sample-size, unit-mismatch, reference-monitor,
+and PurpleAir points-billing caveats visible.
+
+## Public deployment path
+
+The fastest public path is a Vercel preview of the static Vite page. Generate a
+fresh snapshot from CockroachDB first, then deploy the `frontend` directory:
+
+```powershell
+python backend/scripts/demo_status.py --write-frontend-snapshot
+vercel deploy frontend -y
+```
+
+If the hosting account is not authenticated, run `vercel login` first. The
+static fallback does not need `DATABASE_URL`; it reads the committed snapshot.
+Current deployment status: the static build is ready, but this workspace's
+Vercel CLI is unauthenticated, so no public URL was created here.
+For a live API deployment, set `VITE_API_BASE` to the public FastAPI origin and
+configure `AIRCORD_ALLOWED_ORIGINS` on that API. Never place database URLs,
+passwords, certificates, AWS credentials, or API keys in Vite variables or the
+frontend repository.
+
 ## CockroachDB configuration
 
 Copy `.env.example` to `.env` and set:
@@ -195,6 +278,8 @@ After restarting Codex, authenticate with
 provider, but credentials must remain outside the repository. Use the
 read-only SQL in [`docs/cockroachdb_mcp_queries.sql`](docs/cockroachdb_mcp_queries.sql)
 to back these judge questions:
+
+#### MCP judge questions
 
 - Why was sensor 54917 downweighted?
 - What evidence did Aircord use?
