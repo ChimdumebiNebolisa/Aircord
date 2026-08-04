@@ -34,6 +34,34 @@ python backend/scripts/cockroach_write_smoke.py
 The repository smoke test creates and reads one sensor, one sensor reading, and
 one audit-log row in a single transaction, then rolls the transaction back.
 
+## Live PurpleAir ingestion smoke
+
+The first live ingestion command requires these environment variables:
+
+```text
+DATABASE_URL
+PURPLEAIR_API_KEY
+PURPLEAIR_SENSOR_ID
+AWS_REGION
+S3_BUCKET
+```
+
+AWS credentials are resolved through the standard AWS SDK credential chain. If
+the CockroachDB cluster CA is not trusted by the system, also set
+`DATABASE_CA_CERT` to the downloaded certificate path.
+
+After setting the variables in the current shell, run:
+
+```powershell
+python backend/scripts/purpleair_ingest_smoke.py
+```
+
+The command fetches one sensor, stores the complete raw response in S3 under
+`raw/purpleair/sensor_id=<id>/date=<YYYY-MM-DD>/<timestamp>.json`, then upserts
+the sensor and writes one normalized `sensor_readings` row plus one
+`audit_log` row in CockroachDB. It exits without making a network request when a
+required variable is missing.
+
 ## Tests
 
 Install the backend in editable mode with development dependencies:

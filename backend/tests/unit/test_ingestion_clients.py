@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 
 from aircord.ingestion.airnow import AirNowClient
-from aircord.ingestion.purpleair import PurpleAirClient
+from aircord.ingestion.purpleair import PURPLEAIR_FIELDS, PurpleAirClient
 
 
 class _Response:
@@ -81,3 +81,38 @@ def test_purpleair_fetch_decodes_sensor_rows(monkeypatch):
     assert rows[0]["likely_indoor"] is False
     assert captured["headers"] == {"X-API-Key": "test-purpleair"}
     assert captured["params"]["nwlng"] == "-118.6"
+
+
+def test_purpleair_fetch_sensor_returns_raw_payload_and_normalized_row(monkeypatch):
+    captured: dict[str, object] = {}
+    payload = {
+        "fields": [
+            "sensor_index",
+            "name",
+            "latitude",
+            "longitude",
+            "location_type",
+            "last_seen",
+            "pm2.5_atm",
+            "pm2.5_cf_1",
+            "pm2.5_cf_1_a",
+            "pm2.5_cf_1_b",
+            "humidity",
+            "temperature",
+            "uptime",
+            "rssi",
+        ],
+        "data": [[123, "Culver", 34.02, -118.4, 0, 1785672000, 12.0, 13.0, 14.0, 12.0, 45, 72, 100, -50]],
+    }
+
+    def fake_get(url: str, **kwargs: object) -> _Response:
+        captured.update(url=url, **kwargs)
+        return _Response(payload)
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    result = PurpleAirClient(api_key="test-purpleair").fetch_sensor("123")
+
+    assert result.sensor_id == "123"
+    assert result.normalized["pm25_cf1"] == 13.0
+    assert result.payload is payload
+    assert captured["params"] == {"fields": ",".join(PURPLEAIR_FIELDS), "show_only": "123"}

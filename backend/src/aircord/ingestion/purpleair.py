@@ -74,24 +74,24 @@ def normalize_purpleair_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 @dataclass(frozen=True)
+class PurpleAirSensorSnapshot:
+    sensor_id: str
+    normalized: dict[str, Any]
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class PurpleAirClient:
     api_key: str | None = None
+    http_get: Any | None = None
 
-    def fetch(self, _bounds: tuple[float, float, float, float]) -> list[dict]:
+    def _fetch_payload(self, params: dict[str, str]) -> dict[str, Any]:
         api_key = self.api_key or os.getenv("PURPLEAIR_API_KEY")
         if not api_key:
             raise RuntimeError("PURPLEAIR_API_KEY is required for live ingestion; use fixture mode locally")
 
-        west, south, east, north = _bounds
-        params = {
-            "fields": ",".join(PURPLEAIR_FIELDS),
-            "nwlng": str(west),
-            "nwlat": str(north),
-            "selng": str(east),
-            "selat": str(south),
-        }
         try:
-            response = httpx.get(
+            response = (self.http_get or httpx.get)(
                 PURPLEAIR_SENSORS_URL,
                 params=params,
                 headers={"X-API-Key": api_key},
@@ -103,5 +103,33 @@ class PurpleAirClient:
             raise RuntimeError("PurpleAir request failed") from exc
         if not isinstance(payload, dict):
             raise RuntimeError("PurpleAir returned an unexpected response shape")
+        return payload
+
+    def fetch(self, bounds: tuple[float, float, float, float]) -> list[dict[str, Any]]:
+        west, south, east, north = bounds
+        payload = self._fetch_payload(
+            {
+                "fields": ",".join(PURPLEAIR_FIELDS),
+                "nwlng": str(west),
+                "nwlat": str(north),
+                "selng": str(east),
+                "selat": str(south),
+            }
+        )
         return normalize_purpleair_rows(payload)
+
+    def fetch_sensor(self, sensor_id: str) -> PurpleAirSensorSnapshot:
+        if not sensor_id:
+            raise ValueError("PURPLEAIR_SENSOR_ID is required for single-sensor ingestion")
+        payload = self._fetch_payload(
+            {
+                "fields": ",".join(PURPLEAIR_FIELDS),
+                "show_only": str(sensor_id),
+            }
+        )
+        rows = normalize_purpleair_rows(payload)
+        row = next((candidate for candidate in rows if candidate["sensor_id"] == str(sensor_id)), None)
+        if row is None:
+            raise RuntimeError(f"PurpleAir sensor was not returned: {sensor_id}")
+        return PurpleAirSensorSnapshot(sensor_id=str(sensor_id), normalized=row, payload=payload)
 

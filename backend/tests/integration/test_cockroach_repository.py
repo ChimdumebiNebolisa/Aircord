@@ -15,7 +15,7 @@ def test_cockroach_repository_round_trip():
     sensor_id = f"repository-smoke-{uuid4().hex[:12]}"
 
     with repository.transaction(rollback=True) as transaction:
-        sensor = transaction.create_sensor(
+        sensor = transaction.upsert_sensor(
             sensor_id,
             "Aircord repository smoke sensor",
             34.02,

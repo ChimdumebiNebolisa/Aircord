@@ -236,6 +236,32 @@ class Repository:
                 status=status,
             )
 
+    def upsert_sensor(
+        self,
+        sensor_id: str,
+        name: str | None,
+        latitude: float | None,
+        longitude: float | None,
+        *,
+        likely_indoor: bool = False,
+        last_seen: datetime | str | None = None,
+        cluster_id: str | None = None,
+        cell_id: str | None = None,
+        status: str = "active",
+    ) -> dict[str, Any]:
+        with self.transaction() as transaction:
+            return transaction.upsert_sensor(
+                sensor_id,
+                name,
+                latitude,
+                longitude,
+                likely_indoor=likely_indoor,
+                last_seen=last_seen,
+                cluster_id=cluster_id,
+                cell_id=cell_id,
+                status=status,
+            )
+
     def create_sensor_reading(
         self,
         sensor_id: str,
@@ -330,6 +356,9 @@ class RepositoryTransaction:
     def create_sensor(self, *args, **kwargs) -> dict[str, Any]:
         return _create_sensor(self.repository, self.connection, *args, **kwargs)
 
+    def upsert_sensor(self, *args, **kwargs) -> dict[str, Any]:
+        return _upsert_sensor(self.repository, self.connection, *args, **kwargs)
+
     def create_sensor_reading(self, *args, **kwargs) -> dict[str, Any]:
         return _create_sensor_reading(self.repository, self.connection, *args, **kwargs)
 
@@ -389,6 +418,63 @@ def _create_sensor(repository: Repository, connection, sensor_id, name, latitude
                 sensor_id,
                 cluster_id,
                 name,
+                latitude,
+                longitude,
+                cell_id,
+                kwargs.get("status", "active"),
+                int(kwargs.get("likely_indoor", False)),
+                _now(),
+            ),
+        )
+    return _read_sensor(repository, connection, sensor_id)
+
+
+def _upsert_sensor(repository: Repository, connection, sensor_id, name, latitude, longitude, **kwargs):
+    if repository.backend == "cockroach":
+        repository._execute(
+            connection,
+            """
+            INSERT INTO sensors (sensor_id, name, lat, lon, indoor_flag, last_seen)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (sensor_id) DO UPDATE SET
+              name = excluded.name,
+              lat = excluded.lat,
+              lon = excluded.lon,
+              indoor_flag = excluded.indoor_flag,
+              last_seen = excluded.last_seen,
+              updated_at = now()
+            """,
+            (
+                sensor_id,
+                name,
+                latitude,
+                longitude,
+                kwargs.get("likely_indoor", False),
+                kwargs.get("last_seen"),
+            ),
+        )
+    else:
+        cluster_id = kwargs.get("cluster_id")
+        cell_id = kwargs.get("cell_id")
+        if not cluster_id or not cell_id:
+            raise ValueError("cluster_id and cell_id are required for the SQLite repository")
+        repository._execute(
+            connection,
+            """
+            INSERT INTO sensors (sensor_id, cluster_id, name, latitude, longitude, cell_id, status, likely_indoor, version, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+            ON CONFLICT (sensor_id) DO UPDATE SET
+              name = excluded.name,
+              latitude = excluded.latitude,
+              longitude = excluded.longitude,
+              status = excluded.status,
+              likely_indoor = excluded.likely_indoor,
+              updated_at = excluded.updated_at
+            """,
+            (
+                sensor_id,
+                cluster_id,
+                name or sensor_id,
                 latitude,
                 longitude,
                 cell_id,
