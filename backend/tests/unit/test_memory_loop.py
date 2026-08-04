@@ -127,6 +127,58 @@ def test_memory_loop_updates_reputation_estimate_resolution_and_audit():
     assert "not a validated AQI claim" in result.reasoning_text
 
 
+def test_non_null_purpleair_pm_is_not_replaced_by_zero_and_blends_reference():
+    repository = FakeRepository()
+    repository.reading["pm25_cf1"] = 12.0
+    repository.reading["pm25_atm"] = 11.0
+    repository.monitor["latest_aqi"] = 64.0
+
+    result = run_memory_loop("54917", repository=repository, now=repository.now)
+
+    assert result.estimate_aqi > 0.0
+    assert result.estimate_aqi < 64.0
+    assert "Blended PurpleAir PM2.5 proxy" in result.reasoning_text
+
+
+def test_downweighted_zero_pm_sensor_moves_estimate_toward_monitor_instead_of_zero():
+    repository = FakeRepository()
+    repository.reading.update(pm25_cf1=0.0, pm25_atm=0.0, channel_a=0.0, channel_b=0.9)
+    repository.monitor["latest_aqi"] = 64.0
+
+    result = run_memory_loop("54917", repository=repository, now=repository.now)
+
+    assert result.decision == "downweighted"
+    assert result.estimate_aqi > 0.0
+    assert result.estimate_aqi < 64.0
+    assert repository.transaction_value.estimate["estimate_aqi"] == result.estimate_aqi
+
+
+def test_missing_purpleair_pm_uses_explicit_monitor_fallback_and_reasoning():
+    repository = FakeRepository()
+    repository.reading.update(pm25_cf1=None, pm25_atm=None, channel_a=None, channel_b=None)
+    repository.monitor["latest_aqi"] = 64.0
+
+    result = run_memory_loop("54917", repository=repository, now=repository.now)
+
+    assert result.estimate_aqi == 64.0
+    assert "PM2.5 was missing" in result.reasoning_text
+    assert "explicit fallback" in result.reasoning_text
+    assert "PM2.5 was missing" in repository.transaction_value.resolution["reasoning_text"]
+
+
+def test_missing_purpleair_pm_and_monitor_fail_instead_of_defaulting_to_zero():
+    repository = FakeRepository()
+    repository.reading.update(pm25_cf1=None, pm25_atm=None)
+    repository.monitor["latest_aqi"] = None
+
+    try:
+        run_memory_loop("54917", repository=repository, now=repository.now)
+    except RuntimeError as exc:
+        assert "both PurpleAir PM2.5 and AirNow AQI are missing" in str(exc)
+    else:
+        raise AssertionError("missing inputs must not silently produce a zero estimate")
+
+
 class FakeReadbackRepository:
     def read_sensor(self, sensor_id):
         return {"sensor_id": sensor_id, "name": "CCA"}

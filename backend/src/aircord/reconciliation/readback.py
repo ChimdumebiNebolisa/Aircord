@@ -54,7 +54,7 @@ def format_memory_readback(readback: dict[str, Any]) -> str:
     lines = [
         "Aircord memory readback",
         f"sensor: {sensor.get('sensor_id', 'missing')} ({sensor.get('name') or 'unnamed'})",
-        f"latest sensor reading: id={reading.get('reading_id', 'missing')} pm25_cf1={reading.get('pm25_cf1')} observed_at={reading.get('observed_at')}",
+        f"latest sensor reading: id={reading.get('reading_id', 'missing')} pm25_cf1={reading.get('pm25_cf1')} pm25_atm={reading.get('pm25_atm')} channel_a={reading.get('channel_a')} channel_b={reading.get('channel_b')} observed_at={reading.get('observed_at')} raw_s3_key={reading.get('raw_s3_key')}",
         f"latest monitor: id={monitor.get('monitor_id', 'missing')} aqi={monitor.get('latest_aqi')} observed_at={monitor.get('observed_at')}",
         f"sensor reputation: score={reputation.get('reputation_score')} channel_agreement={reputation.get('channel_agreement_score')} drift={reputation.get('drift_score')}",
         f"latest cell estimate: cell_id={estimate.get('cell_id', 'missing')} estimate_aqi={estimate.get('estimate_aqi')} confidence={estimate.get('confidence')}",

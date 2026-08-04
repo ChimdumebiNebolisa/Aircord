@@ -93,9 +93,14 @@ AirNow stores the raw response under
 `raw/airnow/date=<YYYY-MM-DD>/<timestamp>.json`, upserts the nearest current
 monitor, and records an `airnow_ingest` audit row. The memory loop updates the
 sensor reputation, writes `cell_estimates` and `resolutions`, and records
-`aircord_memory` audit rows. Its estimate is explicitly a transparent PM2.5
-proxy until aligned data supports a validated AQI claim; no accuracy number is
-implied.
+`aircord_memory` audit rows. Its estimate explicitly blends the PurpleAir PM2.5
+proxy with the AirNow monitor AQI using the sensor's reputation weight. This is
+a transparent cross-source proxy, not a validated AQI claim; no accuracy
+number is implied. If PM2.5 is missing, the resolution says that the monitor
+AQI was used as an explicit fallback. If both values are missing, the cycle
+fails instead of silently storing `0.0`. A raw PurpleAir PM2.5 value of `0.0`
+is preserved as reported, but a downweighted sensor does not make the whole
+cell estimate zero while a monitor reference is available.
 
 ## AWS Lambda PurpleAir ingestion
 
