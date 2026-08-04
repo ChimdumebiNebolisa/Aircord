@@ -56,6 +56,12 @@ After setting the variables in the current shell, run:
 python backend/scripts/purpleair_ingest_smoke.py
 ```
 
+Expected success output has this shape (values are generated at runtime):
+
+```text
+PurpleAir live ingestion succeeded: sensor=<id>, reading=<uuid>, snapshot=s3://<bucket>/raw/purpleair/sensor_id=<id>/date=<YYYY-MM-DD>/<timestamp>.json, audit=<uuid>
+```
+
 The command fetches one sensor, stores the complete raw response in S3 under
 `raw/purpleair/sensor_id=<id>/date=<YYYY-MM-DD>/<timestamp>.json`, then upserts
 the sensor and writes one normalized `sensor_readings` row plus one
