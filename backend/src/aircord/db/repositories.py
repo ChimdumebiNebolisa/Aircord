@@ -12,6 +12,8 @@ from psycopg.types.json import Jsonb
 from aircord.config import DB_PATH
 from aircord.db.connection import connect_database, database_url_configured
 from aircord.db.session import connect as connect_sqlite
+from aircord.db.vector_schema import COCKROACH_VECTOR_INDEX, COCKROACH_VECTOR_TABLE, VECTOR_INDEX_NAME
+from aircord.reputation.vector import vector_literal
 
 
 def _dict(row: Any) -> dict[str, Any] | None:
@@ -425,6 +427,65 @@ class Repository:
         with self.transaction() as transaction:
             transaction.store_fingerprint(sensor_id, features, updated_at)
 
+    def ensure_vector_schema(self) -> None:
+        if self.backend != "cockroach":
+            return
+        with self.transaction() as transaction:
+            setting = transaction.one("SHOW CLUSTER SETTING feature.vector_index.enabled")
+            if not setting or str(next(iter(setting.values()))).lower() != "true":
+                raise RuntimeError(
+                    "CockroachDB vector indexes are disabled; enable feature.vector_index.enabled first"
+                )
+            transaction.execute(COCKROACH_VECTOR_TABLE)
+            indexes = transaction.many("SHOW INDEXES FROM sensor_embeddings")
+            if not any(row.get("index_name") == VECTOR_INDEX_NAME for row in indexes):
+                transaction.execute("SET sql_safe_updates = false")
+                transaction.execute(COCKROACH_VECTOR_INDEX)
+
+    def upsert_sensor_embedding(
+        self,
+        sensor_id: str,
+        vector: list[float],
+        features: dict[str, float | str],
+        updated_at: str,
+    ) -> dict[str, Any] | None:
+        if self.backend == "cockroach":
+            self.ensure_vector_schema()
+        with self.transaction() as transaction:
+            return transaction.upsert_sensor_embedding(sensor_id, vector, features, updated_at)
+
+    def similar_sensor_embeddings(
+        self,
+        vector: list[float],
+        *,
+        exclude_sensor_id: str | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        if self.backend != "cockroach":
+            return []
+        self.ensure_vector_schema()
+        literal = vector_literal(vector)
+        if exclude_sensor_id is None:
+            query = """
+                SELECT sensor_id, behavioral_fingerprint, feature_json, updated_at,
+                       behavioral_fingerprint <=> CAST(? AS VECTOR(8)) AS cosine_distance
+                FROM sensor_embeddings
+                ORDER BY behavioral_fingerprint <=> CAST(? AS VECTOR(8))
+                LIMIT ?
+            """
+            params = (literal, literal, limit)
+        else:
+            query = """
+                SELECT sensor_id, behavioral_fingerprint, feature_json, updated_at,
+                       behavioral_fingerprint <=> CAST(? AS VECTOR(8)) AS cosine_distance
+                FROM sensor_embeddings
+                WHERE sensor_id <> ?
+                ORDER BY behavioral_fingerprint <=> CAST(? AS VECTOR(8))
+                LIMIT ?
+            """
+            params = (literal, exclude_sensor_id, literal, limit)
+        return self.many(query, params)
+
 
 class RepositoryTransaction:
     def __init__(self, repository: Repository, connection):
@@ -475,6 +536,9 @@ class RepositoryTransaction:
 
     def store_fingerprint(self, sensor_id: str, features: dict[str, float], updated_at: str) -> None:
         _store_fingerprint(self.repository, self.connection, sensor_id, features, updated_at)
+
+    def upsert_sensor_embedding(self, sensor_id: str, vector, features, updated_at: str) -> dict[str, Any] | None:
+        return _upsert_sensor_embedding(self.repository, self.connection, sensor_id, vector, features, updated_at)
 
 
 def _sensor_read_query(backend: str) -> str:
@@ -933,6 +997,29 @@ def _store_fingerprint(repository: Repository, connection, sensor_id: str, featu
         """,
         (sensor_id, json.dumps(features, sort_keys=True), updated_at),
     )
+
+
+def _upsert_sensor_embedding(repository: Repository, connection, sensor_id, vector, features, updated_at):
+    if repository.backend != "cockroach":
+        _store_fingerprint(repository, connection, sensor_id, features, updated_at)
+        return _read_sensor_embedding(repository, connection, sensor_id)
+    return repository._execute_returning(
+        connection,
+        """
+        INSERT INTO sensor_embeddings (sensor_id, behavioral_fingerprint, feature_json, updated_at)
+        VALUES (?, CAST(? AS VECTOR(8)), ?, ?)
+        ON CONFLICT (sensor_id) DO UPDATE SET
+          behavioral_fingerprint = excluded.behavioral_fingerprint,
+          feature_json = excluded.feature_json,
+          updated_at = excluded.updated_at
+        RETURNING *
+        """,
+        (sensor_id, vector_literal(vector), Jsonb(features), updated_at),
+    )
+
+
+def _read_sensor_embedding(repository: Repository, connection, sensor_id: str):
+    return repository._one_on(connection, "SELECT * FROM sensor_embeddings WHERE sensor_id = ?", (sensor_id,))
 
 
 class SQLiteRepository(Repository):

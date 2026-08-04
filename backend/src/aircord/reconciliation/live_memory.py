@@ -8,6 +8,7 @@ from typing import Any
 from aircord.db.repositories import Repository
 from aircord.reconciliation.methods import reference_blended_estimate
 from aircord.reputation.scoring import decision_for_score, score_live_pair
+from aircord.reputation.vector import build_behavioral_fingerprint
 
 
 @dataclass(frozen=True)
@@ -135,6 +136,19 @@ def run_memory_loop(
         "The stored estimate is a transparent cross-source proxy, not a validated AQI claim. "
         f"Reasons: {', '.join(reasons)}."
     )
+    vector = None
+    vector_features = None
+    if getattr(repository, "backend", "sqlite") == "cockroach":
+        repository.ensure_vector_schema()
+        vector, vector_features = build_behavioral_fingerprint(
+            {**sensor, "reputation_score": score.score, "drift_score": score.features["drift_score"]},
+            reading,
+            monitor,
+            confidence=confidence,
+            score_features=score.features,
+            now=captured_at,
+        )
+        vector_features["source"] = "live_memory"
     with repository.transaction() as transaction:
         updated_sensor = transaction.update_sensor_reputation(
             str(sensor_id),
@@ -184,6 +198,13 @@ def run_memory_loop(
                 "reasoning_text": reasoning_text,
             },
         )
+        if vector is not None and vector_features is not None:
+            transaction.upsert_sensor_embedding(
+                str(sensor_id),
+                vector,
+                vector_features,
+                captured_at.isoformat().replace("+00:00", "Z"),
+            )
 
     if updated_sensor is None:
         raise RuntimeError(f"Sensor reputation update did not affect sensor: {sensor_id}")

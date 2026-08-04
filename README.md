@@ -139,6 +139,72 @@ Aircord is more accurate. PurpleAir PM2.5 and AirNow AQI are different units.
 Use the existing SQLite fixture backtest for deterministic development checks:
 `python -m aircord.backtest.run --cluster greater-la --window-days 14`.
 
+## CockroachDB tools: persistent memory, vectors, and MCP
+
+CockroachDB is Aircord's persistent memory layer for live sensors, readings,
+monitors, reputations, estimates, resolutions, audit rows, and backtest
+summaries.
+
+### Distributed Vector Indexing
+
+Aircord stores an explainable, handcrafted 8-dimensional behavioral fingerprint
+in `sensor_embeddings`:
+
+1. reputation score
+2. channel A/B difference
+3. recent PM2.5
+4. missingness indicator
+5. freshness score
+6. absolute difference from the monitor
+7. drift score
+8. confidence
+
+The values are normalized application features, not a trained embedding model.
+CockroachDB stores them in `VECTOR(8)` and uses a cosine vector index. The live
+memory loop refreshes the fingerprint after a reputation update. Run the
+similarity demo with:
+
+```powershell
+python backend/scripts/sensor_similarity.py --sensor-id 54917 --seed-demo-fixtures
+```
+
+`--seed-demo-fixtures` creates only rows whose `feature_json.source` is
+`demo_fixture`; they are clearly labeled and must not be used as live accuracy
+evidence. Without that flag, the command reports only real stored sensors. A
+cosine distance is a behavioral-similarity diagnostic, not an accuracy score.
+See the [CockroachDB vector documentation](https://www.cockroachlabs.com/docs/stable/vector)
+and [vector index documentation](https://www.cockroachlabs.com/docs/stable/vector-indexes).
+
+### Managed MCP Server
+
+CockroachDB Cloud's Managed MCP Server gives an agent read access to the
+CockroachDB memory layer. The endpoint is `https://cockroachlabs.cloud/mcp`.
+In the CockroachDB Cloud Console, open the organization integrations, choose
+the Managed MCP Server, select Codex, prefer OAuth, and scope access to the
+`aircord` cluster. The CockroachDB guide also documents the manual Codex
+configuration:
+
+```toml
+[mcp_servers.cockroachdb-cloud]
+url = "https://cockroachlabs.cloud/mcp"
+http_headers = { "mcp-cluster-id" = "YOUR_CLUSTER_ID" }
+```
+
+After restarting Codex, authenticate with
+`codex mcp login cockroachdb-cloud`. API-key authentication is supported by the
+provider, but credentials must remain outside the repository. Use the
+read-only SQL in [`docs/cockroachdb_mcp_queries.sql`](docs/cockroachdb_mcp_queries.sql)
+to back these judge questions:
+
+- Why was sensor 54917 downweighted?
+- What evidence did Aircord use?
+- What is its latest reputation score?
+- What is the latest resolution and audit trail?
+- What is the latest backtest result and its caveats?
+
+See the [Managed MCP Server setup guide](https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-the-cockroachdb-cloud-mcp-server)
+for the current console, OAuth, and cluster-scope steps.
+
 ## AWS Lambda PurpleAir ingestion
 
 The Lambda entry point wraps the same ingestion path as the local smoke:
