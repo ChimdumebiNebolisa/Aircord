@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
-from contextlib import contextmanager
-from typing import Iterator
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import psycopg
 from psycopg import Connection
+
+
+def database_url_configured() -> bool:
+    return bool(os.getenv("DATABASE_URL"))
 
 
 def get_database_url() -> str:
@@ -23,10 +25,5 @@ def get_database_url() -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-@contextmanager
-def connect_database() -> Iterator[Connection]:
-    connection = psycopg.connect(get_database_url())
-    try:
-        yield connection
-    finally:
-        connection.close()
+def connect_database() -> Connection:
+    return psycopg.connect(get_database_url())

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from aircord.db.repositories import Repository
@@ -8,7 +9,7 @@ from aircord.reconciliation.comparison import compare_cell
 
 def degraded_showcase(path: Path) -> dict | None:
     repository = Repository(path)
-    row = repository.one(
+    candidates = repository.many(
         """
         SELECT s.sensor_id, s.name, s.cell_id, rep.reputation_score, rep.features_json,
                e.estimated_aqi AS aircord_estimate
@@ -17,9 +18,17 @@ def degraded_showcase(path: Path) -> dict | None:
         LEFT JOIN estimates e ON e.estimate_id = (
           SELECT estimate_id FROM estimates e2 WHERE e2.cell_id = s.cell_id ORDER BY e2.updated_at DESC LIMIT 1
         )
-        WHERE rep.reputation_score < 0.85 OR json_extract(rep.features_json, '$.drift_score') > 0.25
-        ORDER BY rep.reputation_score ASC LIMIT 1
+        ORDER BY rep.reputation_score ASC
         """
+    )
+    row = next(
+        (
+            candidate
+            for candidate in candidates
+            if float(candidate.get("reputation_score") or 0.0) < 0.85
+            or float(json.loads(candidate.get("features_json") or "{}").get("drift_score") or 0.0) > 0.25
+        ),
+        None,
     )
     if not row:
         return None

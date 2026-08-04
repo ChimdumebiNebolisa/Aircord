@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from aircord.config import DB_PATH, REFERENCE_CAVEAT, MEDICAL_DIRECTIVE_CAVEAT
+from aircord.db.connection import database_url_configured
 from aircord.db.session import connect, ensure_db
 from aircord.reputation.fingerprints import fingerprint_from_features
 from aircord.reputation.scoring import score_sensor_from_rows
@@ -19,6 +20,8 @@ def _iso(value: datetime) -> str:
 
 
 def seed_demo(path: Path = DB_PATH, *, force: bool = False) -> None:
+    if database_url_configured() and path == DB_PATH:
+        return
     ensure_db(path)
     with connect(path) as connection:
         if connection.execute("SELECT 1 FROM clusters LIMIT 1").fetchone() and not force:

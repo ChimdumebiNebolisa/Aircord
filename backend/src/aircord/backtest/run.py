@@ -9,7 +9,6 @@ from uuid import uuid4
 
 from aircord.config import DB_PATH
 from aircord.db.repositories import Repository
-from aircord.db.session import transaction
 from aircord.fixtures import seed_demo
 from aircord.reconciliation.methods import raw_estimate, static_correction_estimate, trust_weighted_estimate
 from aircord.backtest.alignment import align_rows
@@ -29,8 +28,8 @@ def run_backtest(path: Path = DB_PATH, cluster_id: str = "greater-la") -> dict:
     run_id = f"backtest-{uuid4().hex[:12]}"
     now = _now()
     if len(aligned) < 3:
-        with transaction(path) as connection:
-            connection.execute(
+        with Repository(path).transaction() as transaction:
+            transaction.execute(
                 "INSERT INTO backtest_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (run_id, cluster_id, "", "", "insufficient_data", "no_claim", "Fewer than three aligned observations", now, now),
             )
@@ -59,8 +58,8 @@ def run_backtest(path: Path = DB_PATH, cluster_id: str = "greater-la") -> dict:
             segments["all"][method].append(abs(estimate - reference))
             segments["degraded" if degraded else "healthy"][method].append(abs(estimate - reference))
     summaries = []
-    with transaction(path) as connection:
-        connection.execute(
+    with Repository(path).transaction() as transaction:
+        transaction.execute(
             "INSERT INTO backtest_runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (run_id, cluster_id, aligned[0]["observed_at"], aligned[-1]["observed_at"], "passed", "measured", None, now, now),
         )
@@ -77,13 +76,17 @@ def run_backtest(path: Path = DB_PATH, cluster_id: str = "greater-la") -> dict:
                     "median_absolute_error": round(statistics.median(errors), 2),
                 }
                 summaries.append(summary)
-                connection.execute(
+                transaction.execute(
                     "INSERT INTO backtest_summaries VALUES (?, ?, ?, ?, ?, ?)",
                     (run_id, segment, method, summary["observation_count"], summary["mean_absolute_error"], summary["median_absolute_error"]),
                 )
-        connection.execute(
-            "INSERT INTO audit_log VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (f"audit-{uuid4().hex[:12]}", "backtest_runner", "backtest_completed", "backtest", run_id, None, "Computed from aligned fixture time series", now),
+        transaction.create_audit_log(
+            "backtest_runner",
+            "backtest_completed",
+            "backtest",
+            run_id,
+            reason="Computed from aligned fixture time series",
+            created_at=now,
         )
     return {"backtest_run_id": run_id, "status": "passed", "claim_status": "measured", "summaries": summaries, "failure_reason": None}
 

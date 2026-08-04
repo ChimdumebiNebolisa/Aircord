@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from aircord.config import DB_PATH, MEDICAL_DIRECTIVE_CAVEAT, REFERENCE_CAVEAT
 from aircord.db.models import CandidateEstimate
-from aircord.db.session import transaction
+from aircord.db.repositories import Repository
 
 
 class VersionConflict(RuntimeError):
@@ -23,15 +23,15 @@ def commit_candidate(path: Path, candidate: CandidateEstimate) -> str:
     now = _now()
     estimate_id = f"estimate-{uuid4().hex[:12]}"
     resolution_id = f"resolution-{uuid4().hex[:12]}"
-    with transaction(path) as connection:
-        current = connection.execute("SELECT version FROM cells WHERE cell_id = ?", (candidate.cell_id,)).fetchone()
-        if not current or int(current[0]) != candidate.cell_version:
+    with Repository(path).transaction() as transaction:
+        current = transaction.one("SELECT version FROM cells WHERE cell_id = ?", (candidate.cell_id,))
+        if not current or int(current["version"]) != candidate.cell_version:
             raise VersionConflict(f"Cell {candidate.cell_id} changed while reasoning was in progress")
-        connection.execute(
+        transaction.execute(
             "INSERT INTO estimates VALUES (?, ?, ?, ?, ?, ?)",
             (estimate_id, candidate.cell_id, candidate.estimated_aqi, candidate.confidence, candidate.claim_status, now),
         )
-        connection.execute(
+        transaction.execute(
             "INSERT INTO resolutions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 resolution_id, estimate_id, candidate.cell_id, candidate.rationale,
@@ -40,38 +40,37 @@ def commit_candidate(path: Path, candidate: CandidateEstimate) -> str:
             ),
         )
         for decision, reputation in zip(candidate.decisions, candidate.reputations, strict=True):
-            connection.execute(
+            transaction.execute(
                 "INSERT INTO resolution_sensors VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (
                     resolution_id, decision.sensor_id, decision.reading_id, decision.weight,
                     decision.decision, json.dumps(decision.reason_codes), decision.reputation_score,
                 ),
             )
-            connection.execute(
+            transaction.execute(
                 "UPDATE reputations SET reputation_score = ?, features_json = ?, version = version + 1, updated_at = ? WHERE sensor_id = ?",
                 (reputation.reputation_score, json.dumps(reputation.features), now, reputation.sensor_id),
             )
-            connection.execute(
-                "INSERT OR REPLACE INTO sensor_embeddings VALUES (?, ?, ?)",
-                (reputation.sensor_id, json.dumps(reputation.features), now),
+            transaction.store_fingerprint(reputation.sensor_id, reputation.features, now)
+            transaction.create_audit_log(
+                "reconciler",
+                "reputation_updated",
+                "sensor",
+                reputation.sensor_id,
+                reason="Updated from current paired evidence",
+                created_at=now,
             )
-            connection.execute(
-                "INSERT INTO audit_log VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    f"audit-{uuid4().hex[:12]}", "reconciler", "reputation_updated", "sensor",
-                    reputation.sensor_id, None, "Updated from current paired evidence", now,
-                ),
-            )
-        connection.execute(
+        transaction.execute(
             "UPDATE cells SET version = version + 1, updated_at = ? WHERE cell_id = ?",
             (now, candidate.cell_id),
         )
-        connection.execute(
-            "INSERT INTO audit_log VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                f"audit-{uuid4().hex[:12]}", "reconciler", "estimate_committed", "cell",
-                candidate.cell_id, None, candidate.rationale, now,
-            ),
+        transaction.create_audit_log(
+            "reconciler",
+            "estimate_committed",
+            "cell",
+            candidate.cell_id,
+            reason=candidate.rationale,
+            created_at=now,
         )
     return estimate_id
 
