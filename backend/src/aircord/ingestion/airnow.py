@@ -62,13 +62,14 @@ def normalize_airnow_rows(payload: Any) -> list[dict[str, Any]]:
 @dataclass(frozen=True)
 class AirNowClient:
     api_key: str | None = None
+    http_get: Any | None = None
 
-    def fetch(self, _bounds: tuple[float, float, float, float]) -> list[dict]:
+    def _fetch_payload(self, bounds: tuple[float, float, float, float]) -> Any:
         api_key = self.api_key or os.getenv("AIRNOW_API_KEY")
         if not api_key:
             raise RuntimeError("AIRNOW_API_KEY is required for live ingestion; use fixture mode locally")
 
-        west, south, east, north = _bounds
+        west, south, east, north = bounds
         end = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
         # AirNow observations arrive on an hourly cadence; use a bounded recent
         # window so a request made between publication updates still has data.
@@ -86,10 +87,23 @@ class AirNowClient:
             "API_KEY": api_key,
         }
         try:
-            response = httpx.get(AIRNOW_DATA_URL, params=params, timeout=30.0)
+            response = (self.http_get or httpx.get)(AIRNOW_DATA_URL, params=params, timeout=30.0)
             response.raise_for_status()
             payload = response.json()
         except (httpx.HTTPError, ValueError) as exc:
             raise RuntimeError("AirNow request failed") from exc
-        return normalize_airnow_rows(payload)
+        return payload
+
+    def fetch_snapshot(self, bounds: tuple[float, float, float, float]) -> AirNowSnapshot:
+        payload = self._fetch_payload(bounds)
+        return AirNowSnapshot(payload=payload, rows=normalize_airnow_rows(payload))
+
+    def fetch(self, bounds: tuple[float, float, float, float]) -> list[dict]:
+        return self.fetch_snapshot(bounds).rows
+
+
+@dataclass(frozen=True)
+class AirNowSnapshot:
+    payload: Any
+    rows: list[dict[str, Any]]
 

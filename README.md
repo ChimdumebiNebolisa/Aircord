@@ -68,6 +68,35 @@ the sensor and writes one normalized `sensor_readings` row plus one
 `audit_log` row in CockroachDB. It exits without making a network request when a
 required variable is missing.
 
+## AirNow ingestion and memory readback
+
+The scoped Los Angeles AirNow path uses these variables in addition to the
+PurpleAir/Cockroach/S3 settings:
+
+```text
+DATABASE_URL
+AIRNOW_API_KEY
+PURPLEAIR_SENSOR_ID
+AWS_REGION
+S3_BUCKET
+```
+
+Run the monitor ingest, then the first reputation/resolution loop:
+
+```powershell
+python backend/scripts/airnow_ingest_smoke.py
+python backend/scripts/memory_loop_smoke.py
+python backend/scripts/memory_readback.py --sensor-id 54917
+```
+
+AirNow stores the raw response under
+`raw/airnow/date=<YYYY-MM-DD>/<timestamp>.json`, upserts the nearest current
+monitor, and records an `airnow_ingest` audit row. The memory loop updates the
+sensor reputation, writes `cell_estimates` and `resolutions`, and records
+`aircord_memory` audit rows. Its estimate is explicitly a transparent PM2.5
+proxy until aligned data supports a validated AQI claim; no accuracy number is
+implied.
+
 ## AWS Lambda PurpleAir ingestion
 
 The Lambda entry point wraps the same ingestion path as the local smoke:
@@ -94,6 +123,40 @@ The execution role needs `s3:PutObject` for the raw snapshot prefix, for
 example `arn:aws:s3:::<bucket>/raw/purpleair/*`. Standard CloudWatch Logs
 permissions are also required for Lambda execution logging.
 
+The reproducible deployment uses the committed IAM templates and a Linux
+Python 3.12 package. Set the real values in the current shell without writing
+them to the repository, then run the equivalent commands:
+
+```powershell
+aws iam create-role `
+  --role-name aircord-purpleair-ingest-role `
+  --assume-role-policy-document file://infra/lambda-trust-policy.json
+aws iam put-role-policy `
+  --role-name aircord-purpleair-ingest-role `
+  --policy-name aircord-purpleair-ingest-access `
+  --policy-document file://infra/lambda-access-policy.json
+
+python -m pip install --target .lambda-build/package `
+  --platform manylinux2014_x86_64 --implementation cp --python-version 3.12 `
+  --only-binary=:all: boto3 httpx 'psycopg[binary]'
+New-Item -ItemType Directory .lambda-build/package/certs -Force
+Copy-Item backend/src/aircord .lambda-build/package/aircord -Recurse
+Copy-Item .certs/aircord-ca.crt .lambda-build/package/certs/aircord-ca.crt
+tar -a -c -f .lambda-build/aircord-purpleair-ingest.zip -C .lambda-build/package .
+
+aws lambda create-function `
+  --function-name aircord-purpleair-ingest `
+  --runtime python3.12 `
+  --handler aircord.ingestion.lambda_handlers.purpleair_ingest_handler `
+  --role <role-arn> `
+  --zip-file fileb://.lambda-build/aircord-purpleair-ingest.zip `
+  --environment "Variables={DATABASE_URL=$env:DATABASE_URL,PURPLEAIR_API_KEY=$env:PURPLEAIR_API_KEY,PURPLEAIR_SENSOR_ID=$env:PURPLEAIR_SENSOR_ID,S3_BUCKET=$env:S3_BUCKET,DATABASE_CA_CERT=/var/task/certs/aircord-ca.crt}"
+```
+
+Lambda supplies the reserved `AWS_REGION` variable from the function's
+`us-east-1` deployment region. Keep the CA path inside the artifact or a
+Lambda layer; never use a local Windows path.
+
 After deploying the package, invoke it manually with the AWS CLI:
 
 ```powershell
@@ -107,11 +170,23 @@ Get-Content lambda-response.json
 ```
 
 The response contains `sensor_id`, `s3_key`, `reading_id`, and `audit_id`.
-To schedule later with EventBridge, create a rule such as
-`rate(15 minutes)`, grant that rule permission to invoke the function with
-`lambda:add-permission`, and attach the Lambda ARN with
-`events:put-targets`. Keep the local smoke command as the first diagnostic
-path before troubleshooting a scheduled invocation.
+Schedule the low-cost 15-minute poller with EventBridge:
+
+```powershell
+aws events put-rule --name aircord-purpleair-ingest-15m --schedule-expression "rate(15 minutes)" --state ENABLED
+aws lambda add-permission --function-name aircord-purpleair-ingest --statement-id aircord-purpleair-ingest-15m --action lambda:InvokeFunction --principal events.amazonaws.com --source-arn <rule-arn>
+aws events put-targets --rule aircord-purpleair-ingest-15m --targets Id=aircord-purpleair-ingest-target,Arn=<function-arn>
+```
+
+Disable or re-enable the schedule without deleting it:
+
+```powershell
+aws events disable-rule --name aircord-purpleair-ingest-15m
+aws events enable-rule --name aircord-purpleair-ingest-15m
+```
+
+Keep the local smoke command as the first diagnostic path before
+troubleshooting a scheduled invocation.
 
 ## Tests
 

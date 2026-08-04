@@ -20,6 +20,7 @@ frontend/dist/
 .env.*
 !.env.example
 .certs/
+.lambda-build/
 data/
 *.sqlite3
 

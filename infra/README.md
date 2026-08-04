@@ -9,8 +9,15 @@ transaction opens.
 
 The current adapters fail closed when `AIRNOW_API_KEY` or `PURPLEAIR_API_KEY`
 is missing. They do not silently substitute fixture data for live data. The
-SQLite store is a local development fallback; a CockroachDB adapter and
-deployment provisioning are intentionally not claimed as verified here.
+scoped PurpleAir Lambda and 15-minute EventBridge schedule are verified in
+`us-east-1`; the AirNow monitor ingest and first reputation/resolution loop
+are verified against the live Los Angeles data path. Broader deployment and
+multi-metro operation are not claimed.
+
+The Lambda entry point is
+`aircord.ingestion.lambda_handlers.purpleair_ingest_handler`. The root README
+contains the required environment variables, IAM policy templates, package
+commands, manual invoke command, and schedule disable command.
 
 CockroachDB Distributed Vector Indexing is represented locally by persisted
 behavioral fingerprints and self-similarity distance. The production migration

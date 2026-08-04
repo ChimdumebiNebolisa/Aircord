@@ -146,6 +146,11 @@ class Repository:
         )
 
     def latest_estimate(self, cell_id: str) -> dict[str, Any] | None:
+        if self.backend == "cockroach":
+            return self.one(
+                "SELECT * FROM cell_estimates WHERE cell_id = ? ORDER BY updated_at DESC LIMIT 1",
+                (cell_id,),
+            )
         return self.one(
             "SELECT * FROM estimates WHERE cell_id = ? ORDER BY updated_at DESC LIMIT 1", (cell_id,)
         )
@@ -162,6 +167,16 @@ class Repository:
         )
 
     def sensor_reputation(self, sensor_id: str) -> dict[str, Any] | None:
+        if self.backend == "cockroach":
+            return self.one(
+                """
+                SELECT sensor_id, name, lat AS latitude, lon AS longitude,
+                       reputation_score, channel_agreement_score, drift_score,
+                       indoor_flag AS likely_indoor, last_seen, updated_at
+                FROM sensors WHERE sensor_id = ?
+                """,
+                (sensor_id,),
+            )
         row = self.one(
             """
             SELECT s.sensor_id, s.name, s.cell_id, s.status, s.likely_indoor,
@@ -262,6 +277,78 @@ class Repository:
                 status=status,
             )
 
+    def upsert_monitor(
+        self,
+        monitor_id: str,
+        name: str | None,
+        latitude: float | None,
+        longitude: float | None,
+        latest_aqi: float | None,
+        observed_at: datetime | str | None,
+        *,
+        cluster_id: str = "greater-la",
+        cell_id: str | None = None,
+    ) -> dict[str, Any]:
+        with self.transaction() as transaction:
+            return transaction.upsert_monitor(
+                monitor_id,
+                name,
+                latitude,
+                longitude,
+                latest_aqi,
+                observed_at,
+                cluster_id=cluster_id,
+                cell_id=cell_id,
+            )
+
+    def update_sensor_reputation(
+        self,
+        sensor_id: str,
+        reputation_score: float,
+        features: dict[str, Any],
+        *,
+        channel_agreement_score: float | None = None,
+        drift_score: float | None = None,
+        evidence_start: datetime | str | None = None,
+        evidence_end: datetime | str | None = None,
+    ) -> dict[str, Any] | None:
+        with self.transaction() as transaction:
+            return transaction.update_sensor_reputation(
+                sensor_id,
+                reputation_score,
+                features,
+                channel_agreement_score=channel_agreement_score,
+                drift_score=drift_score,
+                evidence_start=evidence_start,
+                evidence_end=evidence_end,
+            )
+
+    def upsert_cell_estimate(
+        self, cell_id: str, estimate_aqi: float, confidence: float
+    ) -> dict[str, Any] | None:
+        with self.transaction() as transaction:
+            return transaction.upsert_cell_estimate(cell_id, estimate_aqi, confidence)
+
+    def create_resolution(
+        self,
+        cell_id: str,
+        estimate_aqi: float,
+        confidence: float,
+        reasoning_text: str,
+        sensors_considered: list[dict[str, Any]],
+        *,
+        estimate_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        with self.transaction() as transaction:
+            return transaction.create_resolution(
+                cell_id,
+                estimate_aqi,
+                confidence,
+                reasoning_text,
+                sensors_considered,
+                estimate_id=estimate_id,
+            )
+
     def create_sensor_reading(
         self,
         sensor_id: str,
@@ -358,6 +445,18 @@ class RepositoryTransaction:
 
     def upsert_sensor(self, *args, **kwargs) -> dict[str, Any]:
         return _upsert_sensor(self.repository, self.connection, *args, **kwargs)
+
+    def upsert_monitor(self, *args, **kwargs) -> dict[str, Any]:
+        return _upsert_monitor(self.repository, self.connection, *args, **kwargs)
+
+    def update_sensor_reputation(self, *args, **kwargs) -> dict[str, Any] | None:
+        return _update_sensor_reputation(self.repository, self.connection, *args, **kwargs)
+
+    def upsert_cell_estimate(self, *args, **kwargs) -> dict[str, Any] | None:
+        return _upsert_cell_estimate(self.repository, self.connection, *args, **kwargs)
+
+    def create_resolution(self, *args, **kwargs) -> dict[str, Any] | None:
+        return _create_resolution(self.repository, self.connection, *args, **kwargs)
 
     def create_sensor_reading(self, *args, **kwargs) -> dict[str, Any]:
         return _create_sensor_reading(self.repository, self.connection, *args, **kwargs)
@@ -484,6 +583,198 @@ def _upsert_sensor(repository: Repository, connection, sensor_id, name, latitude
             ),
         )
     return _read_sensor(repository, connection, sensor_id)
+
+
+def _upsert_monitor(
+    repository: Repository,
+    connection,
+    monitor_id,
+    name,
+    latitude,
+    longitude,
+    latest_aqi,
+    observed_at,
+    **kwargs,
+):
+    if repository.backend == "cockroach":
+        return repository._execute_returning(
+            connection,
+            """
+            INSERT INTO monitors (monitor_id, name, lat, lon, latest_aqi, observed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (monitor_id) DO UPDATE SET
+              name = excluded.name,
+              lat = excluded.lat,
+              lon = excluded.lon,
+              latest_aqi = excluded.latest_aqi,
+              observed_at = excluded.observed_at,
+              updated_at = now()
+            RETURNING *
+            """,
+            (monitor_id, name, latitude, longitude, latest_aqi, observed_at),
+        )
+
+    cluster_id = kwargs.get("cluster_id", "greater-la")
+    cell_id = kwargs.get("cell_id") or f"cell-{monitor_id}"
+    repository._execute(
+        connection,
+        """
+        INSERT INTO monitors
+          (monitor_id, cluster_id, name, latitude, longitude, latest_aqi, observed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (monitor_id) DO UPDATE SET
+          name = excluded.name,
+          latitude = excluded.latitude,
+          longitude = excluded.longitude,
+          latest_aqi = excluded.latest_aqi,
+          observed_at = excluded.observed_at
+        """,
+        (monitor_id, cluster_id, name or monitor_id, latitude, longitude, latest_aqi, observed_at),
+    )
+    return repository._one_on(
+        connection,
+        "SELECT * FROM monitors WHERE monitor_id = ?",
+        (monitor_id,),
+    )
+
+
+def _update_sensor_reputation(
+    repository: Repository,
+    connection,
+    sensor_id,
+    reputation_score,
+    features,
+    **kwargs,
+):
+    channel_agreement_score = kwargs.get("channel_agreement_score")
+    drift_score = kwargs.get("drift_score")
+    if repository.backend == "cockroach":
+        return repository._execute_returning(
+            connection,
+            """
+            UPDATE sensors
+            SET reputation_score = ?,
+                channel_agreement_score = COALESCE(?, channel_agreement_score),
+                drift_score = COALESCE(?, drift_score),
+                updated_at = now()
+            WHERE sensor_id = ?
+            RETURNING *
+            """,
+            (reputation_score, channel_agreement_score, drift_score, sensor_id),
+        )
+
+    now = _now()
+    evidence_start = kwargs.get("evidence_start") or now
+    evidence_end = kwargs.get("evidence_end") or now
+    repository._execute(
+        connection,
+        """
+        INSERT INTO reputations
+          (sensor_id, reputation_score, features_json, evidence_start, evidence_end, version, updated_at)
+        VALUES (?, ?, ?, ?, ?, 0, ?)
+        ON CONFLICT (sensor_id) DO UPDATE SET
+          reputation_score = excluded.reputation_score,
+          features_json = excluded.features_json,
+          evidence_start = excluded.evidence_start,
+          evidence_end = excluded.evidence_end,
+          version = reputations.version + 1,
+          updated_at = excluded.updated_at
+        """,
+        (sensor_id, reputation_score, json.dumps(features, sort_keys=True), evidence_start, evidence_end, now),
+    )
+    return repository._one_on(
+        connection,
+        "SELECT * FROM reputations WHERE sensor_id = ?",
+        (sensor_id,),
+    )
+
+
+def _upsert_cell_estimate(repository: Repository, connection, cell_id, estimate_aqi, confidence):
+    if repository.backend == "cockroach":
+        return repository._execute_returning(
+            connection,
+            """
+            INSERT INTO cell_estimates (cell_id, estimate_aqi, confidence, version, updated_at)
+            VALUES (?, ?, ?, 0, now())
+            ON CONFLICT (cell_id) DO UPDATE SET
+              estimate_aqi = excluded.estimate_aqi,
+              confidence = excluded.confidence,
+              version = cell_estimates.version + 1,
+              updated_at = now()
+            RETURNING *
+            """,
+            (cell_id, estimate_aqi, confidence),
+        )
+
+    estimate_id = f"estimate-{uuid4().hex[:12]}"
+    now = _now()
+    repository._execute(
+        connection,
+        """
+        INSERT INTO estimates (estimate_id, cell_id, estimated_aqi, confidence, claim_status, updated_at)
+        VALUES (?, ?, ?, ?, 'pending_backtest', ?)
+        """,
+        (estimate_id, cell_id, estimate_aqi, confidence, now),
+    )
+    return repository._one_on(
+        connection,
+        "SELECT * FROM estimates WHERE estimate_id = ?",
+        (estimate_id,),
+    )
+
+
+def _create_resolution(
+    repository: Repository,
+    connection,
+    cell_id,
+    estimate_aqi,
+    confidence,
+    reasoning_text,
+    sensors_considered,
+    **kwargs,
+):
+    if repository.backend == "cockroach":
+        return repository._execute_returning(
+            connection,
+            """
+            INSERT INTO resolutions
+              (cell_id, estimate_aqi, confidence, reasoning_text, sensors_considered)
+            VALUES (?, ?, ?, ?, ?)
+            RETURNING *
+            """,
+            (cell_id, estimate_aqi, confidence, reasoning_text, Jsonb(sensors_considered)),
+        )
+
+    estimate_id = kwargs.get("estimate_id")
+    if not estimate_id:
+        raise ValueError("estimate_id is required for the SQLite repository")
+    resolution_id = f"resolution-{uuid4().hex[:12]}"
+    now = _now()
+    repository._execute(
+        connection,
+        """
+        INSERT INTO resolutions
+          (resolution_id, estimate_id, cell_id, rationale_text, confidence_factors_json,
+           monitor_context_json, reference_caveat, medical_directive_caveat, committed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            resolution_id,
+            estimate_id,
+            cell_id,
+            reasoning_text,
+            json.dumps({"confidence": confidence}, sort_keys=True),
+            json.dumps(sensors_considered, sort_keys=True),
+            "Regulatory monitors are references, not absolute truth.",
+            "This is an estimate, not medical advice.",
+            now,
+        ),
+    )
+    return repository._one_on(
+        connection,
+        "SELECT * FROM resolutions WHERE resolution_id = ?",
+        (resolution_id,),
+    )
 
 
 def _create_sensor_reading(

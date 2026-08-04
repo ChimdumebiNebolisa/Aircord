@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import statistics
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -18,6 +19,87 @@ class ScoreResult:
     @property
     def features_json(self) -> str:
         return json.dumps(self.features, sort_keys=True)
+
+
+def _float_or_none(value: Any) -> float | None:
+    try:
+        return None if value in (None, "") else float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_time(value: Any) -> datetime | None:
+    if value in (None, ""):
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed.astimezone(timezone.utc)
+
+
+def score_live_pair(
+    sensor_reading: dict[str, Any],
+    monitor: dict[str, Any],
+    *,
+    likely_indoor: bool = False,
+    now: datetime | None = None,
+) -> ScoreResult:
+    """Score one live PurpleAir reading against one AirNow reference.
+
+    The comparison is a transparent heuristic for trust weighting. It is not
+    an accuracy claim because PM2.5 concentration and AQI are different units.
+    """
+    pm25 = _float_or_none(sensor_reading.get("pm25_cf1"))
+    if pm25 is None:
+        pm25 = _float_or_none(sensor_reading.get("pm25_atm"))
+    monitor_aqi = _float_or_none(monitor.get("latest_aqi"))
+    channel_a = _float_or_none(sensor_reading.get("channel_a"))
+    channel_b = _float_or_none(sensor_reading.get("channel_b"))
+
+    missing_fields = sum(
+        value is None
+        for value in (pm25, monitor_aqi, channel_a, channel_b, sensor_reading.get("observed_at"))
+    )
+    missingness_score = _clamp(1.0 - missing_fields / 5.0)
+    if pm25 is None or monitor_aqi is None:
+        absolute_difference = 0.0
+        agreement_score = 0.0
+    else:
+        absolute_difference = abs(pm25 - monitor_aqi)
+        agreement_score = _clamp(1.0 - absolute_difference / max(abs(monitor_aqi), 50.0))
+
+    if pm25 is None or channel_a is None or channel_b is None:
+        channel_agreement_score = 0.0
+    else:
+        channel_agreement_score = _clamp(
+            1.0 - abs(channel_a - channel_b) / max(abs(pm25), 1.0)
+        )
+
+    observed_at = _parse_time(sensor_reading.get("observed_at"))
+    captured_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    age_minutes = None if observed_at is None else max(0.0, (captured_at - observed_at).total_seconds() / 60.0)
+    freshness_score = 0.0 if age_minutes is None else _clamp(1.0 - age_minutes / (24.0 * 60.0))
+    indoor_hint_score = 1.0 if likely_indoor else 0.0
+    drift_score = 0.0
+    score = (
+        agreement_score * 0.40
+        + channel_agreement_score * 0.20
+        + freshness_score * 0.20
+        + missingness_score * 0.15
+        + (1.0 - indoor_hint_score) * 0.05
+    )
+    features = {
+        "absolute_difference": round(absolute_difference, 4),
+        "agreement_score": round(agreement_score, 4),
+        "channel_agreement_score": round(channel_agreement_score, 4),
+        "freshness_score": round(freshness_score, 4),
+        "missingness_score": round(missingness_score, 4),
+        "drift_score": drift_score,
+        "indoor_hint_score": indoor_hint_score,
+        "age_minutes": round(age_minutes, 2) if age_minutes is not None else -1.0,
+    }
+    return ScoreResult(round(_clamp(score), 4), features)
 
 
 def score_sensor_from_rows(rows: list[dict[str, Any]], monitor_aqi: float) -> ScoreResult:

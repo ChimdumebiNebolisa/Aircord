@@ -16,7 +16,7 @@ class SnapshotReference:
 
 
 class RawSnapshotStore(Protocol):
-    def put_json(self, key: str, payload: dict[str, Any]) -> SnapshotReference:
+    def put_json(self, key: str, payload: Any) -> SnapshotReference:
         ...
 
 
@@ -30,7 +30,7 @@ class S3SnapshotStore:
         self.region = region
         self.client = client or boto3.client("s3", region_name=region)
 
-    def put_json(self, key: str, payload: dict[str, Any]) -> SnapshotReference:
+    def put_json(self, key: str, payload: Any) -> SnapshotReference:
         normalized_key = key.lstrip("/")
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.client.put_object(
