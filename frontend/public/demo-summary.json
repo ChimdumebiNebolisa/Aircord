@@ -241,7 +241,7 @@
     "PurpleAir is points-billed; live polling should remain bounded."
   ],
   "cell_id": "greater-la-sensor-54917",
-  "generated_at": "2026-08-12T18:00:59.361909+00:00",
+  "generated_at": "2026-08-12T18:59:49.644887+00:00",
   "latest_backtest": {
     "backtest_run_id": "backtest-f1e5c84e0651",
     "claim_status": "measured",

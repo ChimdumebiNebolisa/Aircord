@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "Aircord Observability Trust Memory",
-    "description": "A restrained technical dashboard DNA synthesized from Linear, MotherDuck, and Datadog Cloud Observability, adapted for an inspectable air-quality trust-memory proof surface.",
+    "description": "A dark, compact technical dashboard DNA synthesized from Linear, MotherDuck, and Datadog Cloud Observability, adapted for an inspectable air-quality trust-memory decision packet.",
     "source_references": [
       {
         "name": "Linear homepage",
@@ -24,45 +24,45 @@
   "design_system": {
     "color": {
       "palette_type": "complementary",
-      "primary": { "hex": "#0B1220", "role": "ink and primary navigation text" },
-      "secondary": { "hex": "#25324A", "role": "graphite surfaces and strong secondary text" },
-      "accent": { "hex": "#19B5A5", "role": "trusted/live signal, links, and decision emphasis" },
+      "primary": { "hex": "#07110F", "role": "deep green-black application canvas" },
+      "secondary": { "hex": "#10211D", "role": "elevated dark teal-charcoal surfaces" },
+      "accent": { "hex": "#78E6C0", "role": "trusted/live signal, proof status, links, and decision emphasis" },
       "neutral": {
-        "scale": ["#F7F9FC", "#EEF2F7", "#D9E1EC", "#A9B7C9", "#718096", "#46546A", "#25324A", "#0B1220"],
-        "usage": "Cool neutral scale for page canvas, cards, dividers, metadata, body copy, and ink."
+        "scale": ["#07110F", "#0B1815", "#10211D", "#142B26", "#234039", "#5F746E", "#849C94", "#C4D3CE", "#F0F7F4"],
+        "usage": "Green-black neutral scale for canvas, layered panels, restrained borders, metadata, body copy, and near-white ink."
       },
       "semantic": {
-        "success": "#19B5A5",
-        "warning": "#D98B31",
-        "error": "#D45B65",
-        "info": "#4778D1"
+        "success": "#78E6C0",
+        "warning": "#E0B867",
+        "error": "#EE8D75",
+        "info": "#85B8FF"
       },
-      "surface": { "background": "#F7F9FC", "card": "#FFFFFF", "elevated": "#EEF2F7" },
-      "contrast_strategy": "Dark ink on a cool white canvas with high-contrast data values, thin cool dividers, and accent color reserved for state and proof."
+      "surface": { "background": "#07110F", "card": "#0B1815", "elevated": "#10211D" },
+      "contrast_strategy": "Near-white data values on deep green-black surfaces with muted green-gray metadata, thin teal-gray dividers, mint reserved for trust/proof, and amber reserved for downweighted states."
     },
     "typography": {
       "type_scale": {
-        "display": { "size": "clamp(3.5rem, 8vw, 7rem)", "weight": 650, "line_height": 0.92, "tracking": "-0.08em" },
-        "heading_1": { "size": "clamp(2.25rem, 5vw, 4.5rem)", "weight": 650, "line_height": 0.98, "tracking": "-0.065em" },
-        "heading_2": { "size": "1.5rem", "weight": 650, "line_height": 1.05, "tracking": "-0.04em" },
-        "heading_3": { "size": "1rem", "weight": 650, "line_height": 1.2, "tracking": "-0.02em" },
+        "display": { "size": "clamp(2.65rem, 6.2vw, 5.65rem)", "weight": 600, "line_height": 0.94, "tracking": "-0.07em" },
+        "heading_1": { "size": "clamp(2.25rem, 5vw, 4.75rem)", "weight": 600, "line_height": 0.98, "tracking": "-0.06em" },
+        "heading_2": { "size": "clamp(1.65rem, 3vw, 2.4rem)", "weight": 600, "line_height": 1, "tracking": "-0.045em" },
+        "heading_3": { "size": "1.25rem", "weight": 600, "line_height": 1.15, "tracking": "-0.035em" },
         "body": { "size": "0.95rem", "weight": 450, "line_height": 1.55, "tracking": "-0.01em" },
         "body_small": { "size": "0.78rem", "weight": 450, "line_height": 1.45, "tracking": "0" },
         "caption": { "size": "0.68rem", "weight": 550, "line_height": 1.2, "tracking": "0.08em" },
         "overline": { "size": "0.64rem", "weight": 650, "line_height": 1.2, "tracking": "0.14em" }
       },
       "font_families": {
-        "heading": "Inter, ui-sans-serif, system-ui, sans-serif",
-        "body": "Inter, ui-sans-serif, system-ui, sans-serif",
-        "mono": "'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace"
+        "heading": "'Space Grotesk', ui-sans-serif, system-ui, sans-serif",
+        "body": "'DM Sans', ui-sans-serif, system-ui, sans-serif",
+        "mono": "'DM Mono', 'SFMono-Regular', Consolas, monospace"
       },
-      "font_style_notes": "Neutral grotesk sans for product clarity, with compact monospace for identifiers, timestamps, formulas, and source evidence."
+      "font_style_notes": "Space Grotesk creates decisive metric hierarchy, DM Sans keeps dense explanations readable, and DM Mono distinguishes identifiers, timestamps, formulas, and source evidence."
     },
     "spacing": {
       "base_unit": "4px",
       "scale": ["4px", "8px", "12px", "16px", "20px", "24px", "32px", "48px", "64px", "96px"],
-      "content_density": "comfortable",
-      "section_rhythm": "Tight internal card rhythm with generous section breaks and a deliberate pause around the primary memory decision."
+      "content_density": "compact",
+      "section_rhythm": "Dense 12-20px internal card rhythm, 48-64px supporting section breaks, and no large brochure-like vertical gaps."
     },
     "layout": {
       "grid_system": "12-column editorial dashboard grid",
@@ -73,40 +73,40 @@
       "alignment_tendency": "strict grid with asymmetric hero emphasis"
     },
     "shape": {
-      "border_radius": { "small": "6px", "medium": "10px", "large": "16px", "pill": "999px" },
-      "border_usage": "subtle 1px cool-gray borders; stronger accent border only for the primary decision and evidence callouts",
-      "divider_style": "1px solid #D9E1EC with compact section rules"
+      "border_radius": { "small": "10px", "medium": "14px", "large": "18px", "pill": "999px" },
+      "border_usage": "subtle 1px teal-gray borders; stronger mint, amber, or danger tint only for meaningful state and evidence callouts",
+      "divider_style": "1px solid #234039 with compact section rules"
     },
     "elevation": {
-      "shadow_style": "soft diffused",
+      "shadow_style": "restrained dark ambient",
       "levels": {
-        "low": "0 1px 2px rgba(11,18,32,0.04)",
-        "medium": "0 12px 30px rgba(11,18,32,0.08)",
-        "high": "0 24px 60px rgba(11,18,32,0.12)"
+        "low": "0 1px 2px rgba(0,0,0,0.12)",
+        "medium": "0 14px 36px rgba(0,0,0,0.16)",
+        "high": "0 24px 60px rgba(0,0,0,0.22)"
       },
-      "depth_cues": "Mostly borders and surface contrast, with low-opacity shadows only where a card needs lift."
+      "depth_cues": "Surface lightness and thin borders carry most depth; low-opacity shadows only separate primary panels from the canvas."
     },
     "iconography": {
       "style": "simple outline utility icons",
       "stroke_weight": "1.5px",
       "size_scale": "14px, 16px, 20px",
-      "preferred_set": "Lucide-style outline icons or inline SVG equivalents"
+      "preferred_set": "Status dots, typographic arrows, and minimal inline symbols; no icon-library dependency"
     },
     "motion": {
       "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
       "duration_scale": { "micro": "120ms", "normal": "220ms", "macro": "420ms" },
-      "entrance_pattern": "subtle fade and 8px upward settle for primary sections",
-      "exit_pattern": "quick opacity fade",
-      "philosophy": "minimal functional"
+      "entrance_pattern": "none; data is immediately available and stable",
+      "exit_pattern": "none",
+      "philosophy": "nearly motionless; transitions are limited to focus and link feedback"
     },
     "components": {
-      "button_style": "compact dark-ink primary buttons and text links with clear focus rings",
-      "input_style": "white inputs with 1px cool-gray border and crisp focus accent",
-      "card_style": "white evidence cards on a cool-gray canvas, thin border, tight label/value rhythm",
+      "button_style": "compact dark-surface controls with mint text or borders and clear mint focus rings",
+      "input_style": "dark inputs with a 1px teal-gray border and crisp mint focus accent",
+      "card_style": "dark teal-charcoal evidence cards on a green-black canvas, thin state-aware borders, and tight label/value rhythm",
       "navigation_pattern": "quiet top utility bar with product mark, data source, and section anchors",
       "modal_style": "not needed for the single-page proof surface; use inline disclosure instead",
       "list_style": "dense evidence rows with timestamp, actor, state chip, and monospace identifier",
-      "component_notes": "The page should read as one connected investigation: headline claim, decision, evidence, audit, vector, backtest, and MCP proof."
+      "component_notes": "The first viewport is a four-part decision packet: conflict, memory, decision, and proof. Supporting evidence, audit, vector, backtest, MCP, and caveats follow in compact grids."
     }
   },
   "design_style": {
@@ -121,18 +121,18 @@
     "visual_language": {
       "complexity": "moderate",
       "ornamentation": "subtle accents",
-      "whitespace_usage": "generous around the hero and primary decision, compact inside evidence cards",
+      "whitespace_usage": "controlled around the hero, compact inside the decision packet and evidence cards, with no brochure-like gaps",
       "visual_weight_distribution": "Heavy at the headline and memory decision, distributed through evidence rails and proof cards.",
       "focal_strategy": "single hero decision followed by progressive evidence reveal",
       "contrast_level": "high",
-      "texture_usage": "none beyond faint grid/rule structure and surface contrast"
+      "texture_usage": "a very faint static technical grid behind solid dark surfaces; no glow or gradient decoration"
     },
     "composition": {
       "hierarchy_method": "scale contrast plus color weight and spatial isolation",
       "balance_type": "asymmetric",
       "flow_direction": "top-to-bottom investigation with left-to-right evidence comparisons",
       "grouping_strategy": "semantic bands: decision, sensor/reference, audit, validation, access",
-      "negative_space_role": "creates confidence and separates conclusion from supporting evidence"
+      "negative_space_role": "separates semantic proof groups while keeping the main decision visible within one screen"
     },
     "imagery": {
       "photo_treatment": "none; product proof uses live data instead of photography",
@@ -143,8 +143,8 @@
     },
     "interaction_feel": {
       "feedback_style": "immediate, explicit, and state-labeled",
-      "hover_behavior": "subtle border and shadow lift on interactive cards/links",
-      "transition_personality": "snappy but calm",
+      "hover_behavior": "mint text or border feedback on actual links only; static evidence cards do not lift",
+      "transition_personality": "nearly static and immediate",
       "loading_style": "content-first skeleton or compact status line; never an infinite blank state",
       "microinteraction_density": "low"
     },
@@ -165,16 +165,16 @@
     },
     "background_effects": {
       "type": "none",
-      "description": "No animated background; use a static cool-gray canvas and a faint grid rule in the hero.",
+      "description": "No animated background; use a static deep green-black canvas and a faint technical grid behind solid proof surfaces.",
       "technology": "CSS",
-      "params": { "color_palette": "#F7F9FC and #EEF2F7", "speed": "0", "density": "low", "opacity": "0.35", "blend_mode": "normal" }
+      "params": { "color_palette": "#07110F, #0B1815, and rgba(120,230,192,0.035)", "speed": "0", "density": "low", "opacity": "0.35", "blend_mode": "normal" }
     },
     "particle_systems": { "enabled": false, "type": "none", "description": "No particles; evidence should remain legible.", "technology": "none", "params": { "count": "0", "shape": "none", "size_range": "none", "movement_pattern": "none", "color_behavior": "none", "interaction": "none", "spawn_area": "none" } },
     "3d_elements": { "enabled": false, "type": "none", "description": "No 3D elements; the product is an inspectable data surface.", "technology": "none", "params": { "renderer": "none", "lighting": "none", "camera": "none", "materials": "none", "geometry": "none", "post_processing": "none", "interaction_model": "none" } },
     "shader_effects": { "enabled": false, "type": "none", "description": "No shader effects.", "technology": "none", "params": { "uniforms": "none", "vertex_manipulation": "none", "fragment_output": "none", "noise_type": "none", "distortion": "none" } },
     "scroll_effects": {
       "parallax": { "enabled": false, "layers": "0", "depth_range": "none", "speed_curve": "none" },
-      "scroll_triggered_animations": { "enabled": true, "trigger_points": "section enters viewport", "animation_type": "fade-up", "scrub_behavior": "triggered once" },
+      "scroll_triggered_animations": { "enabled": false, "trigger_points": "none", "animation_type": "none", "scrub_behavior": "none" },
       "scroll_morphing": { "enabled": false, "description": "No scroll morphing." }
     },
     "text_effects": { "type": "none", "description": "Typography remains crisp and static.", "technology": "CSS", "params": { "split_strategy": "none", "animation_per_unit": "none", "stagger": "none", "effect_style": "none" } },
@@ -183,6 +183,6 @@
     "glassmorphism_neumorphism": { "enabled": false, "style": "none", "params": { "blur_radius": "0", "transparency": "0", "border_treatment": "none", "shadow_type": "none", "light_source_angle": "none" } },
     "canvas_drawings": { "enabled": false, "type": "none", "description": "No canvas drawings.", "technology": "none", "params": { "draw_method": "none", "animation_loop": "none", "color_scheme": "none", "responsiveness": "none", "interaction": "none" } },
     "svg_animations": { "enabled": false, "type": "none", "description": "No decorative SVG animation.", "params": { "animation_method": "none", "path_morphing": "none", "stroke_animation": "none", "filter_effects": "none" } },
-    "composite_notes": "Use only a faint static grid, restrained section entrance, focus-ring transitions, and state-color changes. The data and audit trail are the visual interest; avoid decorative motion and gradient effects."
+    "composite_notes": "Use only a faint static grid, focus-ring feedback, and semantic state colors. The decision packet, data, and audit trail are the visual interest; avoid decorative motion, glass, neon glow, and gradient effects."
   }
 }

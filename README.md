@@ -20,6 +20,7 @@ python backend/scripts/demo_status.py --write-frontend-snapshot
 
 # In a second shell:
 cd frontend
+npm install
 npm run dev
 ```
 
@@ -70,9 +71,19 @@ npm run build
 ```
 
 The generated `frontend/public/demo-summary.json` includes `generated_at` and
-only persisted demo data, not credentials. If the live API is unavailable, the
-frontend falls back to this snapshot rather than showing an empty demo. It can
-therefore be deployed without exposing CockroachDB credentials.
+only persisted CockroachDB demo data, not credentials. The frontend does not
+substitute fake or placeholder values. If the live API is unavailable, it
+falls back to this real snapshot rather than inventing data. Regenerate the
+snapshot immediately before the final recording or submission so the timestamp
+and proof reflect the latest available CockroachDB state.
+
+Frontend verification commands:
+
+```powershell
+cd frontend
+npm run typecheck
+npm run build
+```
 
 Architecture proof path:
 

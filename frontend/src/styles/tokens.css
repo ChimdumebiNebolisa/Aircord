@@ -1,0 +1,39 @@
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --color-canvas: #07110f;
+  --color-panel: #0b1815;
+  --color-panel-elevated: #10211d;
+  --color-panel-strong: #142b26;
+  --color-line: #234039;
+  --color-line-strong: #31584e;
+  --color-ink: #f0f7f4;
+  --color-ink-secondary: #c4d3ce;
+  --color-muted: #849c94;
+  --color-faint: #5f746e;
+  --color-mint: #78e6c0;
+  --color-mint-dim: #183d34;
+  --color-amber: #e0b867;
+  --color-amber-dim: #3a2d18;
+  --color-danger: #ee8d75;
+  --color-danger-dim: #3c211c;
+  --color-info: #85b8ff;
+  --color-info-dim: #182d46;
+
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
+
+  --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.16);
+  --shadow-focus: 0 0 0 3px rgba(120, 230, 192, 0.2);
+
+  --ease-aircord: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --aircord-grid-line: rgba(120, 230, 192, 0.035);
+  --aircord-panel-sheen: rgba(240, 247, 244, 0.025);
+}
