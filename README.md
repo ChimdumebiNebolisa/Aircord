@@ -91,12 +91,15 @@ and PurpleAir points-billing caveats visible.
 
 ## Public deployment path
 
-The fastest public path is a Vercel preview of the static Vite page. Generate a
-fresh snapshot from CockroachDB first, then deploy the `frontend` directory:
+The fastest public path is a Vercel production deployment of the static Vite
+page. Generate a fresh snapshot from CockroachDB, build the frontend, then
+deploy the `frontend/dist` output directory:
 
 ```powershell
 python backend/scripts/demo_status.py --write-frontend-snapshot
-vercel deploy frontend -y
+cd frontend
+npm run build
+vercel deploy dist --prod -y
 ```
 
 If the hosting account is not authenticated, run `vercel login` first. The
