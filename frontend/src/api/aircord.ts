@@ -61,6 +61,7 @@ export type Backtest = {
 
 export type DemoSummary = {
   status: "ok" | "empty";
+  generated_at?: string;
   message: string;
   sensor_id: string;
   cell_id: string;
@@ -107,6 +108,7 @@ export type DemoSummary = {
       decision: string;
       weight: number;
       reputation_score: number;
+      reason_codes?: string[];
     }>;
   } | null;
   weight_formula: {
@@ -164,20 +166,30 @@ export type DemoSummary = {
   medical_directive_caveat: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
-const DEMO_PATH = import.meta.env.VITE_API_BASE ? "/api/demo-summary" : "/demo-summary.json";
+const API_BASE = import.meta.env.VITE_API_BASE?.replace(/\/$/, "");
 
-async function get<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
+async function get<T>(base: string, path: string): Promise<T> {
+  const response = await fetch(`${base}${path}`);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   return response.json() as Promise<T>;
 }
 
 export const api = {
-  cluster: () => get<Cluster>("/clusters/active"),
-  cells: () => get<CellSummary[]>("/clusters/active/cells"),
-  cell: (id: string) => get<CellDetail>(`/cells/${id}`),
-  showcase: () => get<Showcase>("/showcases/degraded-sensor"),
-  backtest: () => get<Backtest>("/backtests/latest"),
-  demoSummary: () => get<DemoSummary>(DEMO_PATH),
+  cluster: () => get<Cluster>(API_BASE ?? "", "/clusters/active"),
+  cells: () => get<CellSummary[]>(API_BASE ?? "", "/clusters/active/cells"),
+  cell: (id: string) => get<CellDetail>(API_BASE ?? "", `/cells/${id}`),
+  showcase: () => get<Showcase>(API_BASE ?? "", "/showcases/degraded-sensor"),
+  backtest: () => get<Backtest>(API_BASE ?? "", "/backtests/latest"),
+  demoSummary: async () => {
+    if (!API_BASE) return get<DemoSummary>("", "/demo-summary.json");
+    try {
+      return await get<DemoSummary>(API_BASE, "/api/demo-summary");
+    } catch (liveError) {
+      try {
+        return await get<DemoSummary>("", "/demo-summary.json");
+      } catch {
+        throw liveError;
+      }
+    }
+  },
 };

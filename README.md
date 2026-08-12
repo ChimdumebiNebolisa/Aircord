@@ -10,12 +10,23 @@ broad accuracy claim.
 
 ## Demo surface
 
-The shortest local demo path is:
+The shortest local demo path is a CockroachDB-backed snapshot plus the Vite
+frontend. `demo_status` prints the live proof and writes a timestamped JSON
+snapshot consumed by the page:
 
 ```powershell
 # In the backend environment, set DATABASE_URL and DATABASE_CA_CERT if needed.
+python backend/scripts/demo_status.py --write-frontend-snapshot
+
+# In a second shell:
+cd frontend
+npm run dev
+```
+
+The status-only check is:
+
+```powershell
 python backend/scripts/demo_status.py
-uvicorn aircord.main:app --reload --port 8000
 ```
 
 The read-only API exposes the same CockroachDB-backed result at:
@@ -30,8 +41,27 @@ GET /api/backtests/latest
 GET /api/demo-summary
 ```
 
-The Vite page uses `VITE_API_BASE=http://localhost:8000` for the live API. To
-prepare the public static fallback from the current CockroachDB state, run:
+The persisted weight is intentionally simple and inspectable:
+`sensor_weight = reputation_score * multiplier`. A trusted sensor uses `1.00`,
+an ordinary downweighted sensor uses `0.50`, a drifted downweighted sensor uses
+`0.25`, and an ignored sensor uses `0.00`; the result is rounded to four
+decimals. The current live readback is `0.3973 * 0.50 = 0.1986`.
+
+The page reads `/demo-summary.json` by default, so the normal local run does
+not require a running API. To use the live read-only API instead, start it and
+set `VITE_API_BASE`:
+
+```powershell
+# Shell 1
+uvicorn aircord.main:app --reload --port 8000
+
+# Shell 2
+$env:VITE_API_BASE="http://localhost:8000"
+cd frontend
+npm run dev
+```
+
+To regenerate the public-safe static fallback from current CockroachDB state:
 
 ```powershell
 python backend/scripts/demo_status.py --write-frontend-snapshot
@@ -39,19 +69,10 @@ cd frontend
 npm run build
 ```
 
-For local live rendering, start the API in one shell and the Vite dev server in
-another:
-
-```powershell
-$env:VITE_API_BASE="http://localhost:8000"
-npm run dev
-```
-
-The generated `frontend/public/demo-summary.json` contains only persisted demo
-data, not credentials. The static page reads it when `VITE_API_BASE` is not
-set, so it can be deployed without exposing CockroachDB credentials. Public
-demo URL: not deployed in this repository; use the Vercel preview command in
-the deployment notes below after authenticating the hosting account.
+The generated `frontend/public/demo-summary.json` includes `generated_at` and
+only persisted demo data, not credentials. If the live API is unavailable, the
+frontend falls back to this snapshot rather than showing an empty demo. It can
+therefore be deployed without exposing CockroachDB credentials.
 
 Architecture proof path:
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime, timezone
 from typing import Any
 
 from aircord.config import MEDICAL_DIRECTIVE_CAVEAT, REFERENCE_CAVEAT
@@ -241,6 +242,7 @@ def build_demo_summary(
     has_live_memory = any((sensor, reading, reputation, estimate, resolution))
     return {
         "status": "ok" if has_live_memory else "empty",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "message": "CockroachDB-backed Aircord memory is available." if has_live_memory else "No persisted Aircord memory was found for this sensor.",
         "sensor_id": sensor_id,
         "cell_id": cell_id,
