@@ -28,7 +28,7 @@ export function MemoryDecision({
       <div className="mt-6 grid grid-cols-2 gap-4">
         <Metric
           compact
-          label="Reputation"
+          label="Stored reputation"
           value={formatNumber(formula.reputation_score, 4)}
           supporting="Persistent sensor memory"
         />

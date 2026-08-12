@@ -1,4 +1,51 @@
-# Aircord
+# Aircord - Agentic Memory for Sensor Trust
+
+Aircord learns which community air sensors to trust and explains every downweighted reading.
+
+## For Judges
+
+### What Aircord is
+
+Aircord is an agentic memory layer for unreliable sensor networks: it compares cheap community air sensors against regulatory references, remembers each sensor's behavior, downweights suspicious readings, and records an auditable decision in CockroachDB.
+
+### The one demo case
+
+PurpleAir sensor `54917` reported PM2.5 = `0` while a nearby AirNow monitor reported AQI `64`. Aircord retrieved the sensor's stored reputation, assigned it only `0.1986` weight, blended the estimate toward the reference, and stored the decision with an audit trail.
+
+### Why this is agentic memory
+
+- CockroachDB stores readings, monitor references, sensor reputation, estimates, resolutions, audit logs, backtest runs, and vector fingerprints.
+- Before deciding how much to trust a new reading, the agent retrieves the sensor's stored reputation.
+- That memory changes the output: sensor `54917` is downweighted to `0.1986`.
+- The decision is written back to CockroachDB as a resolution and audit trail for the next cycle.
+
+### CockroachDB tools used
+
+1. **CockroachDB Cloud Managed MCP Server**
+   - Codex connected through MCP and queried the live CockroachDB memory.
+   - Judge question: “Why was sensor 54917 downweighted?”
+   - MCP answer: channel divergence and monitor disagreement were recorded in live memory.
+2. **CockroachDB Distributed Vector Indexing**
+   - `sensor_embeddings` stores `VECTOR(8)` behavioral fingerprints.
+   - Similarity search compares behavior using reputation, channel difference, PM2.5, missingness, freshness, monitor difference, drift, and confidence.
+
+### AWS services used
+
+- **AWS Lambda** - serverless PurpleAir ingestion
+- **Amazon EventBridge** - scheduled 15-minute Lambda execution
+- **Amazon S3** - raw PurpleAir and AirNow snapshot archive
+
+### Public links
+
+- Demo: https://aircord-demo.vercel.app/
+- Repository: https://github.com/ChimdumebiNebolisa/Aircord
+- Submission narrative and recording materials: [`docs/submission/`](docs/submission/)
+
+### Caveats
+
+Aircord does not claim absolute air-quality truth or medical guidance. AirNow is used as a regulatory reference, and the current backtest is a small reference-based proof, not a broad accuracy claim. PurpleAir PM2.5 and AirNow AQI are different measures.
+
+---
 
 Aircord is a one-metro air-quality trust-memory MVP. The backend uses a local
 SQLite fixture database by default and switches to CockroachDB Cloud for real

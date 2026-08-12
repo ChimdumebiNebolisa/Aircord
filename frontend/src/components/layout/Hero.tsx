@@ -23,12 +23,13 @@ export function Hero({
           Aircord / Greater Los Angeles / Trust memory
         </p>
         <h1 className="mt-4 max-w-5xl font-display text-[clamp(2.65rem,6.2vw,5.65rem)] leading-[0.94] font-semibold tracking-[-0.07em] text-ink">
-          Sensor {sensorId} looked fresh. Aircord remembered not to trust it.
+          A community air sensor said the air was clean. Aircord remembered not to trust it.
         </h1>
         <p className="mt-5 max-w-4xl text-[clamp(1rem,1.6vw,1.25rem)] leading-7 text-ink-secondary">
-          PurpleAir reported PM2.5 = {formatNumber(reading?.pm25_cf1, 0)} while the nearby AirNow
-          monitor reported AQI {formatNumber(monitor?.latest_aqi, 0)}. Aircord downweighted the sensor,
-          blended the estimate toward the reference, and wrote the decision to CockroachDB memory.
+          PurpleAir sensor {sensorId} reported PM2.5 = {formatNumber(reading?.pm25_cf1, 0)} while a
+          nearby AirNow regulatory monitor reported AQI {formatNumber(monitor?.latest_aqi, 0)}.
+          Aircord checked the sensor&apos;s stored reliability, downweighted the reading, blended the
+          estimate toward the reference, and wrote the decision to CockroachDB memory.
         </p>
       </div>
 

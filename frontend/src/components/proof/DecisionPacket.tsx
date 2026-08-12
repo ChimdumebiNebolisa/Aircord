@@ -46,18 +46,18 @@ export function DecisionPacket({ demo }: { demo: DemoSummary }) {
           <div className="mt-6 grid grid-cols-2 gap-4">
             <Metric
               compact
-              label="PurpleAir"
+              label="Community sensor"
               value={formatNumber(sensorValue, 0)}
               unit="PM2.5"
-              supporting={`Channels ${formatNumber(reading?.channel_a, 1)} / ${formatNumber(reading?.channel_b, 1)}`}
+              supporting={`PurpleAir • Channels ${formatNumber(reading?.channel_a, 1)} / ${formatNumber(reading?.channel_b, 1)}`}
             />
             <Metric
               compact
-              label="AirNow"
+              label="Regulatory reference"
               value={formatNumber(referenceValue, 0)}
               unit="AQI"
               tone="danger"
-              supporting={`${present(monitor?.name)} / ${present(monitor?.monitor_id)}`}
+              supporting={`AirNow • ${present(monitor?.name)} / ${present(monitor?.monitor_id)}`}
             />
           </div>
           <div className="mt-6 space-y-3" aria-label="Side-by-side signal comparison">
