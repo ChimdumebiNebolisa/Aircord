@@ -102,9 +102,12 @@ and PurpleAir points-billing caveats visible.
 
 ## Public deployment path
 
-The fastest public path is a Vercel production deployment of the static Vite
-page. Generate a fresh snapshot from CockroachDB, build the frontend, then
-deploy the `frontend/dist` output directory:
+The verified public demo is [Aircord on Vercel](https://aircord-demo.vercel.app/).
+It is a production deployment of the static Vite artifact; no backend service
+or database credential is present in the deployment.
+
+Generate a fresh snapshot from CockroachDB, run the Vite build, then deploy the
+`frontend/dist` output directory:
 
 ```powershell
 python backend/scripts/demo_status.py --write-frontend-snapshot
@@ -113,12 +116,23 @@ npm run build
 vercel deploy dist --prod -y
 ```
 
-If the hosting account is not authenticated, run `vercel login` first. The
-static fallback does not need `DATABASE_URL`; it reads the committed snapshot.
-The current public demo is [Aircord on Vercel](https://aircord-demo.vercel.app/).
-It serves the built static page and CockroachDB-backed snapshot without
-exposing database credentials. The Vercel plugin can deploy the built
-`frontend/dist` artifact when the local CLI is not authenticated.
+The build command is `npm run build`, and the output directory is
+`frontend/dist`. If the local CLI is not authenticated, run `vercel login` or
+use the connected Vercel integration to publish the same static artifact to the
+existing `aircord-demo` project. The static deployment reads
+`demo-summary.json`; it does not need `DATABASE_URL` and exposes no database
+credentials.
+
+After deployment, verify both the page and snapshot:
+
+```text
+https://aircord-demo.vercel.app/
+https://aircord-demo.vercel.app/demo-summary.json
+```
+
+The page must show the persisted sensor decision and must not show the snapshot
+failure state.
+
 For a live API deployment, set `VITE_API_BASE` to the public FastAPI origin and
 configure `AIRCORD_ALLOWED_ORIGINS` on that API. Never place database URLs,
 passwords, certificates, AWS credentials, or API keys in Vite variables or the
