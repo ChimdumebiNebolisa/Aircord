@@ -37,7 +37,8 @@ PurpleAir sensor `54917` reported PM2.5 = `0` while a nearby AirNow monitor repo
 
 ### Public links
 
-- Demo: https://aircord-demo.vercel.app/
+- Product landing page: https://aircord-demo.vercel.app/
+- Trust explorer: https://aircord-demo.vercel.app/app
 - Repository: https://github.com/ChimdumebiNebolisa/Aircord
 - Submission narrative and recording materials: [`docs/submission/`](docs/submission/)
 
@@ -57,9 +58,18 @@ broad accuracy claim.
 
 ## Demo surface
 
-The shortest local demo path is a CockroachDB-backed snapshot plus the Vite
-frontend. `demo_status` prints the live proof and writes a timestamped JSON
-snapshot consumed by the page:
+The Vite frontend has two routes with distinct jobs:
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Product landing page explaining why sensor trust memory matters. |
+| `/app` | Trust explorer showing the CockroachDB memory decision and its audit, vector, backtest, and MCP proof. |
+
+Both routes use the same CockroachDB-backed `frontend/public/demo-summary.json`
+snapshot. The landing page presents the concrete decision at a glance; the
+trust explorer exposes the persisted evidence. The shortest local demo path is
+the generated snapshot plus the Vite frontend. `demo_status` prints the live
+proof and writes the timestamped JSON consumed by both routes:
 
 ```powershell
 # In the backend environment, set DATABASE_URL and DATABASE_CA_CERT if needed.
@@ -70,6 +80,9 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Open `http://localhost:5173/` for the landing page and
+`http://localhost:5173/app` for the trust explorer.
 
 The status-only check is:
 
@@ -95,9 +108,10 @@ an ordinary downweighted sensor uses `0.50`, a drifted downweighted sensor uses
 `0.25`, and an ignored sensor uses `0.00`; the result is rounded to four
 decimals. The current live readback is `0.3973 * 0.50 = 0.1986`.
 
-The page reads `/demo-summary.json` by default, so the normal local run does
-not require a running API. To use the live read-only API instead, start it and
-set `VITE_API_BASE`:
+Both pages read `/demo-summary.json` by default, so the normal local run does
+not require a running API. This keeps the public hackathon demo reliable while
+still showing real persisted data rather than fabricated placeholders. To use
+the live read-only API instead, start it and set `VITE_API_BASE`:
 
 ```powershell
 # Shell 1
@@ -149,9 +163,12 @@ and PurpleAir points-billing caveats visible.
 
 ## Public deployment path
 
-The verified public demo is [Aircord on Vercel](https://aircord-demo.vercel.app/).
+The verified public demo is [Aircord on Vercel](https://aircord-demo.vercel.app/),
+with the trust explorer at [the `/app` route](https://aircord-demo.vercel.app/app).
 It is a production deployment of the static Vite artifact; no backend service
-or database credential is present in the deployment.
+or database credential is present in the deployment. `frontend/vercel.json`
+rewrites direct `/app` requests to the Vite entry document so browser refreshes
+work without changing the static data architecture.
 
 Generate a fresh snapshot from CockroachDB, run the Vite build, then deploy the
 `frontend/dist` output directory:
@@ -160,12 +177,13 @@ Generate a fresh snapshot from CockroachDB, run the Vite build, then deploy the
 python backend/scripts/demo_status.py --write-frontend-snapshot
 cd frontend
 npm run build
-vercel deploy dist --prod -y
+vercel deploy --prod -y
 ```
 
-The build command is `npm run build`, and the output directory is
-`frontend/dist`. If the local CLI is not authenticated, run `vercel login` or
-use the connected Vercel integration to publish the same static artifact to the
+Run the Vercel command from `frontend` so its route rewrite is included. The
+build command is `npm run build`, and the output directory is `frontend/dist`.
+If the local CLI is not authenticated, run `vercel login` or use the connected
+Vercel integration to publish the same static artifact and rewrite config to the
 existing `aircord-demo` project. The static deployment reads
 `demo-summary.json`; it does not need `DATABASE_URL` and exposes no database
 credentials.
@@ -174,6 +192,7 @@ After deployment, verify both the page and snapshot:
 
 ```text
 https://aircord-demo.vercel.app/
+https://aircord-demo.vercel.app/app
 https://aircord-demo.vercel.app/demo-summary.json
 ```
 

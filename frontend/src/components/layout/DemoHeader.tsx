@@ -7,7 +7,7 @@ export function DemoHeader({ generatedAt }: { generatedAt?: string }) {
     <header className="flex min-h-16 flex-wrap items-center gap-4 border-b border-line py-4">
       <a
         className="mr-auto font-display text-xl font-bold tracking-[-0.075em] text-ink no-underline"
-        href="#top"
+        href="/"
       >
         air<span className="text-mint">cord</span>
       </a>
