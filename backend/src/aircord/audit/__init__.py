@@ -1,2 +1,0 @@
-"""Append-only audit helpers."""
-

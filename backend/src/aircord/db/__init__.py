@@ -1,2 +1,0 @@
-"""Persistence boundaries for Aircord."""
-
