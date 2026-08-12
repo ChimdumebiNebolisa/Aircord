@@ -9,6 +9,8 @@ function text(value: string | null | undefined) {
   return value || "—";
 }
 
+const repositoryDocs = "https://github.com/ChimdumebiNebolisa/Aircord/blob/main/docs";
+
 function App() {
   const [demo, setDemo] = useState<DemoSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +24,19 @@ function App() {
   const estimate = demo?.latest_cell_estimate;
   const resolution = demo?.latest_resolution;
   const decision = resolution?.sensors_considered[0];
+  const formula = demo?.weight_formula;
+  const formulaScore = formula?.reputation_score ?? decision?.reputation_score ?? null;
+  const formulaWeight = formula?.sensor_weight ?? decision?.weight ?? null;
+  const formulaMultiplier = formula?.multiplier ?? (
+    decision?.decision === "ignored" ? 0 : decision?.decision === "downweighted" ? 0.5 : 1
+  );
+  const formulaExpression = formula?.expression ?? (
+    formulaScore === null || formulaWeight === null
+      ? "Unavailable until a resolution is stored"
+      : `${number(formulaScore, 4)} × ${number(formulaMultiplier, 2)} = ${number(formulaWeight, 4)}`
+  );
+  const mcpConnected = demo?.mcp.connected_through_codex ?? false;
+  const mcpAnswer = demo?.mcp.answer_summary ?? "Sensor 54917 was downweighted because channel_divergence and monitor_disagreement were recorded in the live memory decision.";
   const backtest = demo?.latest_backtest;
   const allBacktest = backtest?.summaries.filter((row) => row.segment === "all") ?? [];
 
@@ -85,6 +100,7 @@ function App() {
                 <div><dt>Weight</dt><dd>{number(decision?.weight, 4)}</dd></div>
                 <div><dt>Confidence</dt><dd>{estimate ? `${number(estimate.confidence * 100, 1)}%` : "—"}</dd></div>
               </dl>
+              <div className="formula-box"><span>Weight formula</span><strong>{formulaExpression}</strong><small>{formula?.description ?? "sensor_weight = reputation_score × multiplier; downweighted sensors use 0.50"}</small></div>
               <p className="reasoning">{text(resolution?.reasoning_text)}</p>
             </article>
 
@@ -112,9 +128,11 @@ function App() {
             <article className="proof-card mcp-card">
               <div className="card-kicker">07 · MCP judge path</div>
               <h2>Ask the memory layer</h2>
-              <p className="small-note">Managed MCP OAuth is documented; the read-only SQL fallback is validated against CockroachDB.</p>
+              <div className="mcp-connection"><span className="live-dot" /> {mcpConnected ? "Connected through Codex" : "Read-only path documented"}</div>
+              <p className="answer-callout"><strong>Why was sensor 54917 downweighted?</strong> {mcpAnswer}</p>
               <code className="query-path">{demo.mcp.query_path}</code>
               <ul>{demo.mcp.questions.map((question) => <li key={question}>{question}</li>)}</ul>
+              <div className="mcp-links"><a href={`${repositoryDocs}/MCP_DEMO.md`} target="_blank" rel="noreferrer">MCP demo notes</a><a href={`${repositoryDocs}/cockroachdb_mcp_queries.sql`} target="_blank" rel="noreferrer">Read-only query pack</a></div>
             </article>
           </section>
           <footer className="demo-footer"><span>Aircord · CockroachDB-backed proof surface</span><span>{demo.reference_caveat} · {demo.medical_directive_caveat}</span></footer>

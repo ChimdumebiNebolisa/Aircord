@@ -31,3 +31,25 @@ def test_demo_api_returns_empty_state_without_faking_sensor_data(demo_db):
     assert response.json()["reading"] is None
     assert summary.status_code == 200
     assert summary.json()["status"] == "empty"
+
+
+def test_demo_api_exposes_required_read_only_judge_paths(demo_db):
+    seed_demo(demo_db)
+    app.dependency_overrides[get_repository] = lambda: Repository(demo_db)
+    paths = (
+        "/api/demo-summary",
+        "/api/sensors/54917/latest",
+        "/api/sensors/54917/memory",
+        "/api/sensors/54917/resolution",
+        "/api/sensors/54917/audit",
+        "/api/sensors/54917/similar",
+        "/api/backtests/latest",
+    )
+    try:
+        with TestClient(app) as client:
+            responses = [client.get(path) for path in paths]
+    finally:
+        app.dependency_overrides.clear()
+
+    assert all(response.status_code == 200 for response in responses)
+    assert all(response.json().get("status") in {"ok", "empty", "pending"} for response in responses)

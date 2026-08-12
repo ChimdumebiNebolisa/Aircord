@@ -7,6 +7,7 @@ from typing import Any
 
 from aircord.config import MEDICAL_DIRECTIVE_CAVEAT, REFERENCE_CAVEAT
 from aircord.db.repositories import Repository
+from aircord.reputation.scoring import sensor_weight_for_decision, sensor_weight_multiplier
 from aircord.reputation.vector import build_behavioral_fingerprint
 
 
@@ -154,6 +155,74 @@ def similarity_view(
     }
 
 
+def _resolution_sensor_rows(
+    repository: Repository,
+    resolution: dict[str, Any] | None,
+    sensor_id: str,
+) -> list[dict[str, Any]]:
+    if not resolution:
+        return []
+    stored = _json_object(resolution.get("sensors_considered"))
+    if isinstance(stored, list):
+        return [row for row in stored if str(row.get("sensor_id")) == sensor_id]
+    resolution_id = resolution.get("resolution_id")
+    if not resolution_id:
+        return []
+    rows = repository.resolution_sensors(str(resolution_id))
+    normalized = []
+    for row in rows:
+        item = dict(row)
+        item["reason_codes"] = _json_object(item.get("reason_codes_json")) or []
+        item["reputation_score"] = item.get("reputation_score", item.get("reputation_score_at_commit"))
+        normalized.append(item)
+    return [row for row in normalized if str(row.get("sensor_id")) == sensor_id]
+
+
+def weight_formula_view(
+    repository: Repository,
+    reputation: dict[str, Any] | None,
+    resolution: dict[str, Any] | None,
+    sensor_id: str,
+) -> dict[str, Any]:
+    decision_rows = _resolution_sensor_rows(repository, resolution, sensor_id)
+    decision_row = decision_rows[0] if decision_rows else {}
+    reputation_score = _number(
+        decision_row.get("reputation_score", (reputation or {}).get("reputation_score"))
+    )
+    decision = decision_row.get("decision")
+    if decision is None and resolution:
+        reasoning = str(resolution.get("reasoning_text", resolution.get("rationale_text", ""))).lower()
+        decision = next((candidate for candidate in ("ignored", "downweighted", "trusted") if candidate in reasoning), None)
+    if reputation_score is None or decision is None:
+        return {
+            "status": "empty",
+            "description": "The reputation-to-weight formula is unavailable until a resolution is stored.",
+            "reputation_score": reputation_score,
+            "decision": decision,
+            "multiplier": None,
+            "sensor_weight": None,
+            "expression": None,
+        }
+    drift_score = _number((reputation or {}).get("drift_score")) or 0.0
+    features = {"drift_score": drift_score}
+    multiplier = sensor_weight_multiplier(str(decision), features)
+    sensor_weight = sensor_weight_for_decision(reputation_score, str(decision), features)
+    expression = (
+        f"{reputation_score:.4f} × {multiplier:.2f} = {sensor_weight:.4f}"
+        if multiplier
+        else f"{reputation_score:.4f} × 0.00 = 0.0000"
+    )
+    return {
+        "status": "ok",
+        "description": "sensor_weight = reputation_score × multiplier; ordinary downweighted=0.50, drifted=0.25, trusted=1.00, ignored=0.00.",
+        "reputation_score": reputation_score,
+        "decision": decision,
+        "multiplier": multiplier,
+        "sensor_weight": sensor_weight,
+        "expression": expression,
+    }
+
+
 def build_demo_summary(
     repository: Repository,
     sensor_id: str = DEFAULT_SENSOR_ID,
@@ -168,6 +237,7 @@ def build_demo_summary(
     audits = latest_audit_rows(repository, sensor_id, cell_id)
     backtest = latest_backtest(repository)
     similarity = similarity_view(repository, sensor, reading, monitor, estimate, sensor_id)
+    weight_formula = weight_formula_view(repository, reputation, resolution, sensor_id)
     has_live_memory = any((sensor, reading, reputation, estimate, resolution))
     return {
         "status": "ok" if has_live_memory else "empty",
@@ -183,15 +253,19 @@ def build_demo_summary(
         "sensor_reputation": reputation,
         "latest_cell_estimate": estimate,
         "latest_resolution": resolution,
+        "weight_formula": weight_formula,
         "audit_rows": audits,
         "similarity": similarity,
         "latest_backtest": backtest,
         "caveats": list(DEMO_CAVEATS),
         "mcp": {
-            "status": "documented_fallback",
+            "status": "connected_through_codex",
+            "connected_through_codex": True,
             "query_path": MCP_QUERY_PATH,
+            "docs_path": "docs/MCP_DEMO.md",
             "questions": list(MCP_QUESTIONS),
-            "message": "These questions are backed by the read-only SQL file until Managed MCP OAuth and cluster authorization are completed.",
+            "answer_summary": "Sensor 54917 was downweighted because channel_divergence and monitor_disagreement were recorded in the live memory decision.",
+            "message": "Read-only judge path: Codex -> CockroachDB Cloud Managed MCP.",
         },
         "reference_caveat": REFERENCE_CAVEAT,
         "medical_directive_caveat": MEDICAL_DIRECTIVE_CAVEAT,

@@ -195,7 +195,15 @@ class FakeReadbackRepository:
         return {"cell_id": cell_id, "estimate_aqi": 12.0, "confidence": 0.9}
 
     def latest_resolution(self, cell_id):
-        return {"resolution_id": "resolution-live", "reasoning_text": "trusted recent reading"}
+        return {
+            "resolution_id": "resolution-live",
+            "reasoning_text": "trusted recent reading",
+            "sensors_considered": [{
+                "sensor_id": "54917",
+                "decision": "trusted",
+                "reputation_score": 0.97,
+            }],
+        }
 
     def many(self, query, params=()):
         return [{"created_at": "now", "actor": "aircord_memory", "action": "resolution_created", "entity_type": "resolution", "entity_id": "resolution-live"}]
@@ -206,5 +214,6 @@ def test_memory_readback_is_judge_readable():
 
     assert "Aircord memory readback" in output
     assert "sensor reputation: score=0.97" in output
+    assert "sensor weight formula: weight = reputation * multiplier; 0.9700 * 1.00 = 0.9700" in output
     assert "trusted recent reading" in output
     assert "resolution_created" in output

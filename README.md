@@ -80,8 +80,10 @@ vercel deploy frontend -y
 
 If the hosting account is not authenticated, run `vercel login` first. The
 static fallback does not need `DATABASE_URL`; it reads the committed snapshot.
-Current deployment status: the static build is ready, but this workspace's
-Vercel CLI is unauthenticated, so no public URL was created here.
+The current public demo is [Aircord on Vercel](https://aircord-demo.vercel.app/).
+It serves the built static page and CockroachDB-backed snapshot without
+exposing database credentials. The Vercel plugin can deploy the built
+`frontend/dist` artifact when the local CLI is not authenticated.
 For a live API deployment, set `VITE_API_BASE` to the public FastAPI origin and
 configure `AIRCORD_ALLOWED_ORIGINS` on that API. Never place database URLs,
 passwords, certificates, AWS credentials, or API keys in Vite variables or the
@@ -184,6 +186,14 @@ AQI was used as an explicit fallback. If both values are missing, the cycle
 fails instead of silently storing `0.0`. A raw PurpleAir PM2.5 value of `0.0`
 is preserved as reported, but a downweighted sensor does not make the whole
 cell estimate zero while a monitor reference is available.
+
+The sensor weight formula is intentionally explicit: `sensor_weight =
+reputation_score × multiplier`. Trusted sensors use `1.00`, ordinary
+downweighted sensors use `0.50`, drifted sensors use `0.25`, and ignored sensors
+use `0.00`. For the live sensor `54917`, `0.3973 × 0.50 = 0.19865`, rounded to
+the persisted weight `0.1986`. The same explanation appears in
+`python backend/scripts/memory_readback.py --sensor-id 54917` and the demo
+page.
 
 ## Backtest
 

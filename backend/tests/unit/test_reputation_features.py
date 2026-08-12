@@ -2,7 +2,11 @@ import json
 
 from aircord.db.repositories import Repository
 from aircord.reputation.fingerprints import fingerprint_distance
-from aircord.reputation.scoring import decision_for_score, score_sensor_from_rows
+from aircord.reputation.scoring import (
+    decision_for_score,
+    score_sensor_from_rows,
+    sensor_weight_for_decision,
+)
 
 
 def test_drifted_sensor_has_explainable_features(demo_db):
@@ -22,4 +26,11 @@ def test_drifted_sensor_has_explainable_features(demo_db):
 def test_fingerprint_distance_is_zero_for_same_behavior():
     features = {"agreement_score": 0.9, "channel_agreement_score": 0.8}
     assert fingerprint_distance(features, features) == 0
+
+
+def test_downweighted_sensor_weight_formula_is_explicit():
+    assert sensor_weight_for_decision(0.3973, "downweighted", {"drift_score": 0.0}) == 0.1986
+    assert sensor_weight_for_decision(0.3973, "downweighted", {"drift_score": 0.3}) == 0.0993
+    assert sensor_weight_for_decision(0.91, "trusted", {"drift_score": 0.0}) == 0.91
+    assert sensor_weight_for_decision(0.91, "ignored", {"drift_score": 0.0}) == 0.0
 

@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 from aircord.db.repositories import Repository
+from aircord.reputation.scoring import sensor_weight_for_decision, sensor_weight_multiplier
 
 
 def build_memory_readback(
@@ -51,12 +52,35 @@ def format_memory_readback(readback: dict[str, Any]) -> str:
     reputation = readback.get("sensor_reputation") or {}
     estimate = readback.get("latest_cell_estimate") or {}
     resolution = readback.get("latest_resolution") or {}
+    considered = resolution.get("sensors_considered") or []
+    if isinstance(considered, str):
+        try:
+            import json
+
+            considered = json.loads(considered)
+        except (TypeError, ValueError):
+            considered = []
+    decision_row = next(
+        (row for row in considered if str(row.get("sensor_id")) == str(sensor.get("sensor_id"))),
+        {},
+    )
+    reputation_score = decision_row.get("reputation_score", reputation.get("reputation_score"))
+    decision = decision_row.get("decision")
+    if reputation_score is not None and decision:
+        drift_score = float(reputation.get("drift_score") or 0.0)
+        features = {"drift_score": drift_score}
+        multiplier = sensor_weight_multiplier(decision, features)
+        weight = sensor_weight_for_decision(reputation_score, decision, features)
+        formula = f"{float(reputation_score):.4f} * {multiplier:.2f} = {weight:.4f}"
+    else:
+        formula = "unavailable until a persisted resolution identifies the decision"
     lines = [
         "Aircord memory readback",
         f"sensor: {sensor.get('sensor_id', 'missing')} ({sensor.get('name') or 'unnamed'})",
         f"latest sensor reading: id={reading.get('reading_id', 'missing')} pm25_cf1={reading.get('pm25_cf1')} pm25_atm={reading.get('pm25_atm')} channel_a={reading.get('channel_a')} channel_b={reading.get('channel_b')} observed_at={reading.get('observed_at')} raw_s3_key={reading.get('raw_s3_key')}",
         f"latest monitor: id={monitor.get('monitor_id', 'missing')} aqi={monitor.get('latest_aqi')} observed_at={monitor.get('observed_at')}",
         f"sensor reputation: score={reputation.get('reputation_score')} channel_agreement={reputation.get('channel_agreement_score')} drift={reputation.get('drift_score')}",
+        f"sensor weight formula: weight = reputation * multiplier; {formula}",
         f"latest cell estimate: cell_id={estimate.get('cell_id', 'missing')} estimate_aqi={estimate.get('estimate_aqi')} confidence={estimate.get('confidence')}",
         f"latest resolution: id={resolution.get('resolution_id', 'missing')} reasoning={resolution.get('reasoning_text')}",
         "latest audit rows:",

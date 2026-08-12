@@ -70,9 +70,12 @@ recorded cause of this individual downweight.
 In plain language, the two sensor channels disagreed with each other, and the
 sensor's zero PM2.5 proxy disagreed with the monitor's AQI `64`. The reason
 codes are live database facts; interpreting the raw PM2.5 value as the source
-of the recorded `64` difference is an inference from the stored values. The
-database does not expose the exact formula that maps reputation `0.3973` to
-sensor weight `0.1986`.
+of the recorded `64` difference is an inference from the stored values. Aircord
+exposes the simple application formula in code and readback output:
+`sensor_weight = reputation_score × multiplier`. Trusted sensors use `1.00`,
+ordinary downweighted sensors use `0.50`, drifted sensors use `0.25`, and
+ignored sensors use `0.00`; therefore `0.3973 × 0.50 = 0.19865`, rounded to
+`0.1986`.
 
 ## Credential caveat
 

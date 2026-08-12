@@ -109,6 +109,15 @@ export type DemoSummary = {
       reputation_score: number;
     }>;
   } | null;
+  weight_formula: {
+    status: "ok" | "empty";
+    description: string;
+    reputation_score: number | null;
+    decision: string | null;
+    multiplier: number | null;
+    sensor_weight: number | null;
+    expression: string | null;
+  };
   audit_rows: Array<{
     audit_id?: string;
     created_at: string;
@@ -144,9 +153,12 @@ export type DemoSummary = {
   caveats: string[];
   mcp: {
     status: string;
+    connected_through_codex?: boolean;
     query_path: string;
+    docs_path?: string;
     questions: string[];
     message: string;
+    answer_summary?: string;
   };
   reference_caveat: string;
   medical_directive_caveat: string;

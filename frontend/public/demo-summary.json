@@ -337,6 +337,15 @@
       }
     ]
   },
+  "weight_formula": {
+    "description": "sensor_weight = reputation_score × multiplier; ordinary downweighted=0.50, drifted=0.25, trusted=1.00, ignored=0.00.",
+    "decision": "downweighted",
+    "expression": "0.3973 × 0.50 = 0.1986",
+    "multiplier": 0.5,
+    "reputation_score": 0.3973,
+    "sensor_weight": 0.1986,
+    "status": "ok"
+  },
   "latest_sensor_reading": {
     "channel_a": 0.0,
     "channel_b": 1.9,
@@ -350,9 +359,12 @@
     "rssi": -66.0,
     "sensor_id": "54917"
   },
-  "mcp": {
-    "message": "These questions are backed by the read-only SQL file until Managed MCP OAuth and cluster authorization are completed.",
-    "query_path": "docs/cockroachdb_mcp_queries.sql",
+    "mcp": {
+        "answer_summary": "Sensor 54917 was downweighted because channel_divergence and monitor_disagreement were recorded in the live memory decision.",
+        "connected_through_codex": true,
+        "docs_path": "docs/MCP_DEMO.md",
+        "message": "Read-only judge path: Codex -> CockroachDB Cloud Managed MCP.",
+        "query_path": "docs/cockroachdb_mcp_queries.sql",
     "questions": [
       "Why was sensor 54917 downweighted?",
       "What evidence did Aircord use?",
@@ -360,7 +372,7 @@
       "Show the latest resolution and audit trail.",
       "Show the latest backtest result and caveats."
     ],
-    "status": "documented_fallback"
+        "status": "connected_through_codex"
   },
   "medical_directive_caveat": "Aircord is an air-quality estimate with confidence, not medical advice or a health directive.",
   "message": "CockroachDB-backed Aircord memory is available.",

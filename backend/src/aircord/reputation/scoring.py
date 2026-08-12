@@ -138,6 +138,34 @@ def score_sensor_from_rows(rows: list[dict[str, Any]], monitor_aqi: float) -> Sc
     return ScoreResult(round(_clamp(score), 4), {key: round(value, 4) for key, value in features.items()})
 
 
+def sensor_weight_multiplier(decision: str, features: dict[str, float]) -> float:
+    """Return the deliberately small multiplier applied to reputation.
+
+    Trusted sensors keep their reputation as weight, ordinary downweighted
+    sensors use half of it, drifted sensors use one quarter, and ignored
+    sensors contribute zero.
+    """
+    if decision == "ignored":
+        return 0.0
+    if decision == "downweighted":
+        return 0.25 if features.get("drift_score", 0.0) > 0.25 else 0.5
+    return 1.0
+
+
+def sensor_weight_for_decision(
+    reputation_score: float,
+    decision: str,
+    features: dict[str, float],
+) -> float:
+    """Map a reputation score to the persisted sensor weight.
+
+    Formula: ``sensor_weight = reputation_score * multiplier``. The result is
+    rounded to four decimals, so reputation ``0.3973`` with an ordinary
+    downweighted decision becomes ``0.3973 * 0.5 = 0.1986``.
+    """
+    return round(float(reputation_score) * sensor_weight_multiplier(decision, features), 4)
+
+
 def decision_for_score(score: float, features: dict[str, float], likely_indoor: bool = False) -> tuple[str, float, list[str]]:
     reasons: list[str] = []
     if features.get("channel_agreement_score", 1.0) < 0.75:
@@ -149,8 +177,10 @@ def decision_for_score(score: float, features: dict[str, float], likely_indoor: 
     if likely_indoor or features.get("indoor_hint_score", 0.0) > 0.8:
         reasons.append("likely_indoor")
     if score < 0.3 or likely_indoor or features.get("indoor_hint_score", 0.0) > 0.8:
-        return "ignored", 0.0, reasons or ["insufficient_reputation"]
+        decision = "ignored"
+        return decision, sensor_weight_for_decision(score, decision, features), reasons or ["insufficient_reputation"]
     if score < 0.85 or features.get("drift_score", 0.0) > 0.25:
-        multiplier = 0.25 if features.get("drift_score", 0.0) > 0.25 else 0.5
-        return "downweighted", round(score * multiplier, 4), reasons or ["mixed_evidence"]
-    return "trusted", round(score, 4), reasons or ["consistent_history"]
+        decision = "downweighted"
+        return decision, sensor_weight_for_decision(score, decision, features), reasons or ["mixed_evidence"]
+    decision = "trusted"
+    return decision, sensor_weight_for_decision(score, decision, features), reasons or ["consistent_history"]
