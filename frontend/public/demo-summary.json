@@ -337,15 +337,6 @@
       }
     ]
   },
-  "weight_formula": {
-    "description": "sensor_weight = reputation_score × multiplier; ordinary downweighted=0.50, drifted=0.25, trusted=1.00, ignored=0.00.",
-    "decision": "downweighted",
-    "expression": "0.3973 × 0.50 = 0.1986",
-    "multiplier": 0.5,
-    "reputation_score": 0.3973,
-    "sensor_weight": 0.1986,
-    "status": "ok"
-  },
   "latest_sensor_reading": {
     "channel_a": 0.0,
     "channel_b": 1.9,
@@ -359,12 +350,12 @@
     "rssi": -66.0,
     "sensor_id": "54917"
   },
-    "mcp": {
-        "answer_summary": "Sensor 54917 was downweighted because channel_divergence and monitor_disagreement were recorded in the live memory decision.",
-        "connected_through_codex": true,
-        "docs_path": "docs/MCP_DEMO.md",
-        "message": "Read-only judge path: Codex -> CockroachDB Cloud Managed MCP.",
-        "query_path": "docs/cockroachdb_mcp_queries.sql",
+  "mcp": {
+    "answer_summary": "Sensor 54917 was downweighted because channel_divergence and monitor_disagreement were recorded in the live memory decision.",
+    "connected_through_codex": true,
+    "docs_path": "docs/MCP_DEMO.md",
+    "message": "Read-only judge path: Codex -> CockroachDB Cloud Managed MCP.",
+    "query_path": "docs/cockroachdb_mcp_queries.sql",
     "questions": [
       "Why was sensor 54917 downweighted?",
       "What evidence did Aircord use?",
@@ -372,7 +363,7 @@
       "Show the latest resolution and audit trail.",
       "Show the latest backtest result and caveats."
     ],
-        "status": "connected_through_codex"
+    "status": "connected_through_codex"
   },
   "medical_directive_caveat": "Aircord is an air-quality estimate with confidence, not medical advice or a health directive.",
   "message": "CockroachDB-backed Aircord memory is available.",
@@ -409,7 +400,7 @@
       "channel_a_b_difference": 1.0,
       "confidence": 0.697,
       "drift_score": 0.0,
-      "freshness_score": 0.9639939856944444,
+      "freshness_score": 0.0,
       "missingness_indicator": 0.0,
       "recent_pm25": 0.0,
       "reputation_score": 0.3973
@@ -417,14 +408,14 @@
     "message": "Lower cosine distance means the handcrafted behavioral features are more similar; it is not an accuracy score.",
     "nearest": [
       {
-        "cosine_distance": 0.0001676874469774825,
+        "cosine_distance": 0.1470257346442293,
         "label": "similar behavioral fixture",
         "sensor_id": "demo-fixture-similar",
         "source": "demo_fixture",
         "updated_at": "2026-08-04 22:49:32.591537+00:00"
       },
       {
-        "cosine_distance": 0.08366295170709281,
+        "cosine_distance": 0.19154369159206175,
         "label": "different behavioral fixture",
         "sensor_id": "demo-fixture-different",
         "source": "demo_fixture",
@@ -433,5 +424,14 @@
     ],
     "status": "ok"
   },
-  "status": "ok"
+  "status": "ok",
+  "weight_formula": {
+    "decision": "downweighted",
+    "description": "sensor_weight = reputation_score \u00d7 multiplier; ordinary downweighted=0.50, drifted=0.25, trusted=1.00, ignored=0.00.",
+    "expression": "0.3973 \u00d7 0.50 = 0.1986",
+    "multiplier": 0.5,
+    "reputation_score": 0.3973,
+    "sensor_weight": 0.1986,
+    "status": "ok"
+  }
 }
