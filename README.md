@@ -290,6 +290,11 @@ to back these judge questions:
 See the [Managed MCP Server setup guide](https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-the-cockroachdb-cloud-mcp-server)
 for the current console, OAuth, and cluster-scope steps.
 
+### MCP demo
+
+See [docs/MCP_DEMO.md](docs/MCP_DEMO.md) for the exact Codex setup, judge
+questions, and the actual live answer for why sensor `54917` was downweighted.
+
 ## AWS Lambda PurpleAir ingestion
 
 The Lambda entry point wraps the same ingestion path as the local smoke:
